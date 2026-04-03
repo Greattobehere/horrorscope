@@ -1,0 +1,197 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 480" width="340" height="480">
+  <defs>
+    <radialGradient id="bg-warm" cx="50%" cy="70%" r="65%">
+      <stop offset="0%" stop-color="#3d1f08"/>
+      <stop offset="60%" stop-color="#1a0d04"/>
+      <stop offset="100%" stop-color="#0d0804"/>
+    </radialGradient>
+    <radialGradient id="candle-halo" cx="50%" cy="55%" r="50%">
+      <stop offset="0%" stop-color="#e8933a" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#e8933a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="skin-c" cx="42%" cy="32%" r="62%">
+      <stop offset="0%" stop-color="#fde8d0"/>
+      <stop offset="55%" stop-color="#f5c9a0"/>
+      <stop offset="100%" stop-color="#e8a87c"/>
+    </radialGradient>
+    <radialGradient id="hair-c" cx="48%" cy="15%" r="72%">
+      <stop offset="0%" stop-color="#e05c1a"/>
+      <stop offset="40%" stop-color="#c0390a"/>
+      <stop offset="100%" stop-color="#7a1e04"/>
+    </radialGradient>
+    <radialGradient id="eye-iris" cx="38%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#4db87a"/>
+      <stop offset="50%" stop-color="#2a8a50"/>
+      <stop offset="100%" stop-color="#155c30"/>
+    </radialGradient>
+    <radialGradient id="pendant-g" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#5aeaaa"/>
+      <stop offset="60%" stop-color="#0aae6b"/>
+      <stop offset="100%" stop-color="#065c38"/>
+    </radialGradient>
+    <radialGradient id="cheek-blush" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f0a090" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#f0a090" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      .breathe { animation: breathe 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center bottom; }
+      .hair-wave { animation: hairwave 5s ease-in-out infinite; transform-box: fill-box; transform-origin: center top; }
+      .cf { animation: flicker 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center bottom; }
+      .cf2 { animation: flicker 1.8s ease-in-out infinite 0.6s; transform-box: fill-box; transform-origin: center bottom; }
+      .ps { animation: swing 3.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center top; }
+      .bl { animation: blink 5s ease-in-out infinite 3s; transform-box: fill-box; transform-origin: center; }
+      @keyframes breathe { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+      @keyframes hairwave { 0%,100%{transform:skewX(0deg)} 33%{transform:skewX(0.8deg)} 66%{transform:skewX(-0.5deg)} }
+      @keyframes flicker { 0%,100%{opacity:1;transform:scaleY(1)} 25%{opacity:.85;transform:scaleY(.88)} 50%{opacity:1;transform:scaleY(1.05)} 75%{opacity:.9;transform:scaleY(.92)} }
+      @keyframes swing { 0%,100%{transform:rotate(-2deg)} 50%{transform:rotate(2deg)} }
+      @keyframes blink { 0%,92%,100%{transform:scaleY(1)} 96%{transform:scaleY(0.08)} }
+    </style>
+  </defs>
+
+  <rect width="340" height="480" fill="url(#bg-warm)"/>
+  <rect width="340" height="480" fill="url(#candle-halo)"/>
+
+  <!-- Background candles right -->
+  <g class="cf2" transform="translate(272,115)">
+    <rect x="-5" y="0" width="10" height="58" rx="3" fill="#ede0b8" opacity="0.85"/>
+    <ellipse cx="0" cy="0" rx="4" ry="8" fill="#ffdd55" opacity="0.95"/>
+    <ellipse cx="0" cy="-5" rx="2" ry="4.5" fill="#fff8bb" opacity="0.8"/>
+    <ellipse cx="0" cy="0" rx="14" ry="20" fill="#e88030" opacity="0.2"/>
+  </g>
+  <g class="cf" transform="translate(292,148)">
+    <rect x="-4" y="0" width="8" height="40" rx="2" fill="#ede0b8" opacity="0.7"/>
+    <ellipse cx="0" cy="0" rx="3.5" ry="6.5" fill="#ffdd55" opacity="0.9"/>
+    <ellipse cx="0" cy="-4" rx="1.8" ry="3.5" fill="#fff8bb" opacity="0.7"/>
+  </g>
+  <!-- Background candles left -->
+  <g class="cf" transform="translate(52,128)">
+    <rect x="-5" y="0" width="10" height="52" rx="3" fill="#ede0b8" opacity="0.8"/>
+    <ellipse cx="0" cy="0" rx="4" ry="7.5" fill="#ffdd55" opacity="0.9"/>
+    <ellipse cx="0" cy="-4" rx="2" ry="4" fill="#fff8bb" opacity="0.75"/>
+    <ellipse cx="0" cy="0" rx="14" ry="20" fill="#e88030" opacity="0.17"/>
+  </g>
+
+  <!-- Crystal ball hint bottom -->
+  <ellipse cx="72" cy="345" rx="36" ry="32" fill="#8ab8e8" opacity="0.13"/>
+  <ellipse cx="72" cy="345" rx="36" ry="32" fill="none" stroke="#aaccee" stroke-width="1.5" opacity="0.22"/>
+  <ellipse cx="62" cy="333" rx="11" ry="9" fill="white" opacity="0.09"/>
+
+  <!-- HAIR back waves -->
+  <g class="hair-wave">
+    <path d="M 102 150 Q 55 178 42 245 Q 32 298 48 358 Q 56 386 72 376 Q 60 312 72 258 Q 84 202 106 168 Z" fill="#b83508" opacity="0.92"/>
+    <path d="M 238 150 Q 285 178 298 245 Q 308 298 292 358 Q 284 386 268 376 Q 280 312 268 258 Q 256 202 234 168 Z" fill="#b83508" opacity="0.92"/>
+    <path d="M 96 158 Q 62 188 55 250 Q 50 292 62 332" stroke="#c84010" stroke-width="20" fill="none" stroke-linecap="round" opacity="0.65"/>
+    <path d="M 244 158 Q 278 188 285 250 Q 290 292 278 332" stroke="#c84010" stroke-width="20" fill="none" stroke-linecap="round" opacity="0.65"/>
+  </g>
+
+  <!-- BODY GROUP -->
+  <g class="breathe">
+
+    <!-- Dark blouse body -->
+    <path d="M 88 270 Q 85 256 110 249 L 150 243 Q 162 241 170 241 Q 178 241 190 243 L 230 249 Q 255 256 252 270 L 258 412 Q 258 426 240 426 L 100 426 Q 82 426 82 412 Z" fill="#1e0e2a"/>
+    <path d="M 126 270 Q 170 284 214 270" stroke="#2e1a3e" stroke-width="1.5" fill="none" opacity="0.7"/>
+    <path d="M 120 300 Q 170 314 220 300" stroke="#2e1a3e" stroke-width="1.2" fill="none" opacity="0.45"/>
+
+    <!-- Lace collar -->
+    <path d="M 132 249 Q 147 244 157 246 Q 163 248 170 248 Q 177 248 183 246 Q 193 244 208 249 Q 216 255 210 261 Q 198 267 170 264 Q 142 267 130 261 Q 124 255 132 249 Z" fill="#e8e0f8" opacity="0.2"/>
+
+    <!-- Neck -->
+    <path d="M 154 218 Q 150 233 150 249 L 190 249 Q 190 233 186 218 Z" fill="url(#skin-c)"/>
+
+    <!-- Arms -->
+    <path d="M 90 272 Q 70 302 65 347 Q 62 367 76 372 Q 88 375 92 354 Q 96 320 108 290 Z" fill="#1e0e2a"/>
+    <ellipse cx="74" cy="374" rx="16" ry="11" fill="url(#skin-c)" transform="rotate(-10,74,374)"/>
+    <path d="M 250 272 Q 270 302 275 347 Q 278 367 264 372 Q 252 375 248 354 Q 244 320 232 290 Z" fill="#1e0e2a"/>
+    <ellipse cx="266" cy="374" rx="16" ry="11" fill="url(#skin-c)" transform="rotate(10,266,374)"/>
+
+    <!-- Pendant chain -->
+    <path d="M 158 249 Q 163 278 166 306 L 174 306 Q 177 278 182 249" stroke="#c8a832" stroke-width="1.8" fill="none" opacity="0.9"/>
+
+    <!-- Pendant emerald -->
+    <g class="ps">
+      <ellipse cx="170" cy="314" rx="12" ry="15" fill="url(#pendant-g)"/>
+      <ellipse cx="170" cy="314" rx="12" ry="15" fill="none" stroke="#5aeaaa" stroke-width="1.8" opacity="0.85"/>
+      <line x1="170" y1="299" x2="170" y2="329" stroke="#5aeaaa" stroke-width="0.7" opacity="0.5"/>
+      <line x1="158" y1="314" x2="182" y2="314" stroke="#5aeaaa" stroke-width="0.7" opacity="0.5"/>
+      <ellipse cx="165" cy="308" rx="5" ry="6" fill="#5aeaaa" opacity="0.38"/>
+    </g>
+
+    <!-- HEAD — big Pixar proportions -->
+    <ellipse cx="170" cy="158" rx="76" ry="82" fill="url(#skin-c)"/>
+
+    <!-- Cheek blush -->
+    <ellipse cx="118" cy="180" rx="24" ry="15" fill="url(#cheek-blush)"/>
+    <ellipse cx="222" cy="180" rx="24" ry="15" fill="url(#cheek-blush)"/>
+
+    <!-- Freckles -->
+    <circle cx="142" cy="172" r="2.2" fill="#d4896a" opacity="0.42"/>
+    <circle cx="151" cy="177" r="1.6" fill="#d4896a" opacity="0.32"/>
+    <circle cx="135" cy="179" r="1.5" fill="#d4896a" opacity="0.28"/>
+    <circle cx="198" cy="172" r="2.2" fill="#d4896a" opacity="0.42"/>
+    <circle cx="189" cy="177" r="1.6" fill="#d4896a" opacity="0.32"/>
+    <circle cx="205" cy="180" r="1.5" fill="#d4896a" opacity="0.28"/>
+
+    <!-- Eyebrows -->
+    <path d="M 126 130 Q 141 121 158 127" stroke="#7a3515" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M 182 127 Q 199 121 214 130" stroke="#7a3515" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+
+    <!-- Eyes — big Pixar -->
+    <g class="bl">
+      <ellipse cx="144" cy="153" rx="20" ry="18" fill="white"/>
+      <ellipse cx="144" cy="154" rx="14" ry="14" fill="url(#eye-iris)"/>
+      <ellipse cx="144" cy="154" rx="8" ry="8" fill="#0a1e12"/>
+      <circle cx="137" cy="147" r="4.5" fill="white" opacity="0.95"/>
+      <circle cx="152" cy="159" r="2.2" fill="white" opacity="0.55"/>
+      <ellipse cx="144" cy="154" rx="14" ry="14" fill="none" stroke="#1a5530" stroke-width="1.2" opacity="0.55"/>
+    </g>
+    <g class="bl">
+      <ellipse cx="196" cy="153" rx="20" ry="18" fill="white"/>
+      <ellipse cx="196" cy="154" rx="14" ry="14" fill="url(#eye-iris)"/>
+      <ellipse cx="196" cy="154" rx="8" ry="8" fill="#0a1e12"/>
+      <circle cx="189" cy="147" r="4.5" fill="white" opacity="0.95"/>
+      <circle cx="204" cy="159" r="2.2" fill="white" opacity="0.55"/>
+      <ellipse cx="196" cy="154" rx="14" ry="14" fill="none" stroke="#1a5530" stroke-width="1.2" opacity="0.55"/>
+    </g>
+
+    <!-- Eyelashes -->
+    <path d="M 124 140 Q 129 133 135 137" stroke="#180808" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 138 135 Q 143 128 149 132" stroke="#180808" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 153 133 Q 158 127 164 131" stroke="#180808" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 176 131 Q 181 125 187 129" stroke="#180808" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 191 133 Q 196 127 202 131" stroke="#180808" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 207 136 Q 211 130 216 134" stroke="#180808" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- Nose soft -->
+    <path d="M 161 172 Q 158 184 161 192 Q 166 196 174 192 Q 177 184 174 172" stroke="#c8886a" stroke-width="1.2" fill="none" opacity="0.45"/>
+    <path d="M 158 192 Q 164 196 170 196 Q 176 196 182 192" stroke="#c8886a" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.55"/>
+
+    <!-- Smile — big Pixar joy -->
+    <path d="M 140 213 Q 157 230 170 231 Q 183 230 200 213" stroke="#c05538" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+    <path d="M 140 213 Q 155 226 170 227 Q 185 226 200 213 Q 192 220 170 222 Q 148 220 140 213 Z" fill="#e87060" opacity="0.38"/>
+    <path d="M 147 216 Q 170 226 193 216 Q 186 222 170 224 Q 154 222 147 216 Z" fill="white" opacity="0.72"/>
+    <!-- Dimples -->
+    <circle cx="134" cy="217" r="4" fill="#d4846a" opacity="0.22"/>
+    <circle cx="206" cy="217" r="4" fill="#d4846a" opacity="0.22"/>
+
+    <!-- HAIR front -->
+    <g class="hair-wave">
+      <path d="M 94 164 Q 88 100 112 71 Q 132 47 158 43 Q 170 40 182 43 Q 208 49 228 71 Q 250 100 246 164 Q 230 128 206 120 Q 186 113 170 115 Q 154 113 134 120 Q 110 128 94 164 Z" fill="url(#hair-c)"/>
+      <path d="M 94 164 Q 78 149 75 120 Q 72 95 87 73 Q 99 57 118 49 Q 100 72 100 104 Q 100 138 106 164 Z" fill="#a82e08" opacity="0.82"/>
+      <path d="M 246 164 Q 262 149 265 120 Q 268 95 253 73 Q 241 57 222 49 Q 240 72 240 104 Q 240 138 234 164 Z" fill="#a82e08" opacity="0.82"/>
+      <!-- Shine -->
+      <path d="M 148 55 Q 170 49 192 55 Q 180 52 170 51 Q 160 52 148 55 Z" fill="#f07038" opacity="0.38"/>
+      <!-- Flyaways -->
+      <path d="M 97 112 Q 80 92 76 72" stroke="#c84010" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+      <path d="M 243 112 Q 260 92 266 73" stroke="#c84010" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+    </g>
+
+    <!-- Gold earrings -->
+    <circle cx="94" cy="192" r="4.5" fill="#c8a832" opacity="0.9"/>
+    <ellipse cx="94" cy="201" rx="3.2" ry="5.5" fill="#c8a832" opacity="0.85"/>
+    <circle cx="246" cy="192" r="4.5" fill="#c8a832" opacity="0.9"/>
+    <ellipse cx="246" cy="201" rx="3.2" ry="5.5" fill="#c8a832" opacity="0.85"/>
+
+  </g>
+
+  <rect x="0" y="375" width="340" height="105" fill="url(#bg-warm)" opacity="0.55"/>
+</svg>

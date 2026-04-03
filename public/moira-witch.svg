@@ -1,0 +1,243 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 480" width="340" height="480">
+  <defs>
+    <radialGradient id="wbg" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#041a0a"/>
+      <stop offset="100%" stop-color="#020b05"/>
+    </radialGradient>
+    <radialGradient id="wglow" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#2ee59d" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#2ee59d" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="handglow-l" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2ee59d" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#2ee59d" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="handglow-r" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2ee59d" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#2ee59d" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="wskin" cx="42%" cy="32%" r="62%">
+      <stop offset="0%" stop-color="#6abf88"/>
+      <stop offset="55%" stop-color="#3a8a58"/>
+      <stop offset="100%" stop-color="#1e5c35"/>
+    </radialGradient>
+    <radialGradient id="whair" cx="48%" cy="15%" r="72%">
+      <stop offset="0%" stop-color="#d04010"/>
+      <stop offset="40%" stop-color="#9a2808"/>
+      <stop offset="100%" stop-color="#5a1004"/>
+    </radialGradient>
+    <radialGradient id="weye" cx="38%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#7affc0"/>
+      <stop offset="50%" stop-color="#2ee59d"/>
+      <stop offset="100%" stop-color="#0aae6b"/>
+    </radialGradient>
+    <radialGradient id="wpendant" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#a0ffd8"/>
+      <stop offset="60%" stop-color="#2ee59d"/>
+      <stop offset="100%" stop-color="#065c38"/>
+    </radialGradient>
+    <filter id="eglow">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="lglow">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <style>
+      .wsway { animation: wsway 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center bottom; }
+      .whair { animation: wsway 3s ease-in-out infinite; transform-box: fill-box; transform-origin: center top; }
+      .wps { animation: wpulse 2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+      .lightning { animation: lightning 3.5s ease-in-out infinite; }
+      .lightning2 { animation: lightning 3.5s ease-in-out infinite 1.2s; }
+      .lhand { animation: handpulse 2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+      .rhand { animation: handpulse 2s ease-in-out infinite 0.4s; transform-box: fill-box; transform-origin: center; }
+      .brow { animation: browraise 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+      @keyframes wsway { 0%,100%{transform:translateY(0) rotate(0deg)} 33%{transform:translateY(-4px) rotate(-0.6deg)} 66%{transform:translateY(-2px) rotate(0.4deg)} }
+      @keyframes wpulse { 0%,100%{transform:scale(1);opacity:0.9} 50%{transform:scale(1.12);opacity:1} }
+      @keyframes lightning { 0%,80%,100%{opacity:0} 85%,95%{opacity:0.7} 90%{opacity:1} }
+      @keyframes handpulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+      @keyframes browraise { 0%,85%,100%{transform:translateY(0)} 90%,95%{transform:translateY(-2px)} }
+    </style>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="340" height="480" fill="url(#wbg)"/>
+  <rect width="340" height="480" fill="url(#wglow)"/>
+
+  <!-- Lightning bolts background -->
+  <g class="lightning">
+    <path d="M 272 15 L 255 65 L 268 65 L 248 118" stroke="#2ee59d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M 272 15 L 255 65 L 268 65 L 248 118" stroke="#2ee59d" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.12"/>
+  </g>
+  <g class="lightning2">
+    <path d="M 65 22 L 80 64 L 67 64 L 85 106" stroke="#2ee59d" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 65 22 L 80 64 L 67 64 L 85 106" stroke="#2ee59d" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.1"/>
+  </g>
+
+  <!-- GREEN LIGHTNING from HANDS — the signature reference-image element -->
+  <!-- Left hand lightning cluster -->
+  <g class="lhand" filter="url(#lglow)">
+    <ellipse cx="72" cy="355" rx="45" ry="40" fill="url(#handglow-l)" opacity="0.8"/>
+    <!-- Lightning arcs from left hand -->
+    <path d="M 72 340 L 40 305 L 52 305 L 25 270" stroke="#2ee59d" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <path d="M 72 340 L 40 305 L 52 305 L 25 270" stroke="#2ee59d" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.2"/>
+    <path d="M 72 340 L 90 308 L 80 308 L 100 280" stroke="#7affd8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M 72 340 L 45 320 L 35 295" stroke="#2ee59d" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.6"/>
+    <path d="M 72 340 L 55 325 L 42 310 L 30 298" stroke="#a0ffd8" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <!-- Hand glow orb -->
+    <ellipse cx="72" cy="348" rx="20" ry="18" fill="#2ee59d" opacity="0.35"/>
+    <ellipse cx="72" cy="348" rx="10" ry="9" fill="#a0ffd8" opacity="0.6"/>
+  </g>
+
+  <!-- Right hand lightning cluster -->
+  <g class="rhand" filter="url(#lglow)">
+    <ellipse cx="268" cy="355" rx="45" ry="40" fill="url(#handglow-r)" opacity="0.8"/>
+    <path d="M 268 340 L 300 305 L 288 305 L 315 270" stroke="#2ee59d" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <path d="M 268 340 L 300 305 L 288 305 L 315 270" stroke="#2ee59d" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.2"/>
+    <path d="M 268 340 L 250 308 L 260 308 L 240 280" stroke="#7affd8" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+    <path d="M 268 340 L 295 320 L 305 295" stroke="#2ee59d" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.6"/>
+    <path d="M 268 340 L 285 325 L 298 310 L 310 298" stroke="#a0ffd8" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <ellipse cx="268" cy="348" rx="20" ry="18" fill="#2ee59d" opacity="0.35"/>
+    <ellipse cx="268" cy="348" rx="10" ry="9" fill="#a0ffd8" opacity="0.6"/>
+  </g>
+
+  <!-- WILD HAIR back layer -->
+  <g class="whair">
+    <path d="M 100 152 Q 50 180 36 248 Q 24 302 42 362 Q 50 390 68 380 Q 55 315 68 260 Q 80 205 104 170 Z" fill="#9a2808" opacity="0.95"/>
+    <path d="M 240 152 Q 290 180 304 248 Q 316 302 298 362 Q 290 390 272 380 Q 285 315 272 260 Q 260 205 236 170 Z" fill="#9a2808" opacity="0.95"/>
+    <!-- Wild strands -->
+    <path d="M 96 148 Q 60 110 45 72" stroke="#b83508" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.75"/>
+    <path d="M 104 138 Q 72 95 68 58" stroke="#8a2208" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.65"/>
+    <path d="M 244 148 Q 280 110 295 73" stroke="#b83508" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.75"/>
+    <path d="M 236 138 Q 268 95 272 60" stroke="#8a2208" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.65"/>
+    <path d="M 138 50 Q 128 28 135 12" stroke="#9a2808" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.65"/>
+    <path d="M 170 45 Q 168 22 175 8" stroke="#a83008" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55"/>
+    <path d="M 202 50 Q 212 28 205 12" stroke="#9a2808" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.65"/>
+  </g>
+
+  <!-- BODY -->
+  <g class="wsway">
+
+    <!-- Dark tattered blouse -->
+    <path d="M 86 270 Q 83 256 108 249 L 148 243 Q 160 241 170 241 Q 180 241 192 243 L 232 249 Q 257 256 254 270 L 260 412 Q 260 426 242 426 L 98 426 Q 80 426 80 412 Z" fill="#100818"/>
+    <!-- Tattered edges -->
+    <path d="M 98 426 L 104 415 L 110 426 L 116 413 L 122 426" stroke="#1a1028" stroke-width="1" fill="none"/>
+    <path d="M 218 426 L 224 415 L 230 426 L 236 413 L 242 426" stroke="#1a1028" stroke-width="1" fill="none"/>
+    <!-- Green mist on blouse -->
+    <ellipse cx="170" cy="360" rx="80" ry="35" fill="#0aae6b" opacity="0.06"/>
+
+    <!-- Neck green skin -->
+    <path d="M 152 218 Q 148 233 148 249 L 192 249 Q 192 233 188 218 Z" fill="url(#wskin)"/>
+
+    <!-- Arms (raised slightly — casting lightning pose from reference) -->
+    <path d="M 90 272 Q 62 295 58 338 Q 54 360 68 368 Q 80 374 85 354 Q 90 322 104 292 Z" fill="#100818"/>
+    <!-- Left green hand (open, raised) -->
+    <ellipse cx="68" cy="354" rx="18" ry="14" fill="url(#wskin)" transform="rotate(-25,68,354)"/>
+    <!-- Left finger claws -->
+    <path d="M 52 344 Q 46 334 48 326" stroke="#1e5c35" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 60 340 Q 54 328 56 320" stroke="#1e5c35" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 70 338 Q 66 326 68 318" stroke="#1e5c35" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 80 340 Q 78 328 82 322" stroke="#1e5c35" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <path d="M 250 272 Q 278 295 282 338 Q 286 360 272 368 Q 260 374 255 354 Q 250 322 236 292 Z" fill="#100818"/>
+    <!-- Right green hand -->
+    <ellipse cx="272" cy="354" rx="18" ry="14" fill="url(#wskin)" transform="rotate(25,272,354)"/>
+    <!-- Right finger claws -->
+    <path d="M 288 344 Q 294 334 292 326" stroke="#1e5c35" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 280 340 Q 286 328 284 320" stroke="#1e5c35" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 270 338 Q 274 326 272 318" stroke="#1e5c35" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M 260 340 Q 262 328 258 322" stroke="#1e5c35" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- Pendant glowing chain -->
+    <path d="M 156 249 Q 162 278 165 306 L 175 306 Q 178 278 184 249" stroke="#2ee59d" stroke-width="2" fill="none" opacity="0.9"/>
+
+    <!-- Pendant cursed emerald -->
+    <g class="wps">
+      <ellipse cx="170" cy="314" rx="13" ry="16" fill="url(#wpendant)"/>
+      <ellipse cx="170" cy="314" rx="13" ry="16" fill="none" stroke="#2ee59d" stroke-width="2.2" opacity="0.95"/>
+      <ellipse cx="170" cy="314" rx="20" ry="22" fill="none" stroke="#2ee59d" stroke-width="1" opacity="0.3"/>
+      <ellipse cx="170" cy="314" rx="28" ry="30" fill="none" stroke="#2ee59d" stroke-width="0.5" opacity="0.15"/>
+      <ellipse cx="165" cy="308" rx="5.5" ry="6.5" fill="#a0ffd8" opacity="0.55"/>
+    </g>
+
+    <!-- GREEN WITCH HEAD -->
+    <ellipse cx="170" cy="158" rx="76" ry="82" fill="url(#wskin)"/>
+
+    <!-- Skin texture — mottled green -->
+    <ellipse cx="128" cy="145" rx="20" ry="13" fill="#1e5c35" opacity="0.22"/>
+    <ellipse cx="214" cy="148" rx="18" ry="12" fill="#1e5c35" opacity="0.22"/>
+    <!-- Under-eye shadows -->
+    <path d="M 122 170 Q 144 176 158 173" stroke="#0a3820" stroke-width="3" fill="none" opacity="0.35"/>
+    <path d="M 182 173 Q 196 176 218 170" stroke="#0a3820" stroke-width="3" fill="none" opacity="0.35"/>
+
+    <!-- Sharper cheekbones -->
+    <path d="M 100 168 Q 118 177 130 184" stroke="#0e4228" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.45"/>
+    <path d="M 240 168 Q 222 177 210 184" stroke="#0e4228" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.45"/>
+
+    <!-- Dramatically arched witch brows -->
+    <g class="brow">
+      <path d="M 122 128 Q 138 116 158 123" stroke="#050f08" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M 182 123 Q 202 116 218 128" stroke="#050f08" stroke-width="4" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <!-- GLOWING EYES — green electric -->
+    <g filter="url(#eglow)">
+      <ellipse cx="144" cy="153" rx="20" ry="18" fill="#030e06"/>
+      <ellipse cx="144" cy="154" rx="14" ry="14" fill="url(#weye)"/>
+      <ellipse cx="144" cy="154" rx="8" ry="8" fill="#020805"/>
+      <!-- Supernatural green glow rings -->
+      <ellipse cx="144" cy="154" rx="16" ry="16" fill="none" stroke="#2ee59d" stroke-width="2.5" opacity="0.9"/>
+      <ellipse cx="144" cy="154" rx="21" ry="20" fill="none" stroke="#2ee59d" stroke-width="1.2" opacity="0.45"/>
+      <ellipse cx="144" cy="154" rx="26" ry="24" fill="none" stroke="#2ee59d" stroke-width="0.6" opacity="0.2"/>
+      <circle cx="137" cy="147" r="4" fill="#a0ffd8" opacity="0.95"/>
+    </g>
+    <g filter="url(#eglow)">
+      <ellipse cx="196" cy="153" rx="20" ry="18" fill="#030e06"/>
+      <ellipse cx="196" cy="154" rx="14" ry="14" fill="url(#weye)"/>
+      <ellipse cx="196" cy="154" rx="8" ry="8" fill="#020805"/>
+      <ellipse cx="196" cy="154" rx="16" ry="16" fill="none" stroke="#2ee59d" stroke-width="2.5" opacity="0.9"/>
+      <ellipse cx="196" cy="154" rx="21" ry="20" fill="none" stroke="#2ee59d" stroke-width="1.2" opacity="0.45"/>
+      <ellipse cx="196" cy="154" rx="26" ry="24" fill="none" stroke="#2ee59d" stroke-width="0.6" opacity="0.2"/>
+      <circle cx="189" cy="147" r="4" fill="#a0ffd8" opacity="0.95"/>
+    </g>
+
+    <!-- WART — the nose tip signature -->
+    <path d="M 161 172 Q 157 184 160 193 Q 165 198 175 193 Q 178 184 175 172" stroke="#0e4228" stroke-width="1.2" fill="none" opacity="0.7"/>
+    <path d="M 157 193 Q 163 198 170 198 Q 177 198 183 193" stroke="#0e4228" stroke-width="1.5" fill="none" opacity="0.6"/>
+    <!-- Prominent wart bump on nose tip -->
+    <ellipse cx="170" cy="204" rx="11" ry="10" fill="#1a5c35"/>
+    <ellipse cx="170" cy="204" rx="11" ry="10" fill="none" stroke="#0a3820" stroke-width="1.8"/>
+    <!-- Wart texture bumps -->
+    <circle cx="167" cy="201" r="2.5" fill="#0e4228" opacity="0.65"/>
+    <circle cx="174" cy="205" r="2" fill="#0a3820" opacity="0.55"/>
+    <circle cx="169" cy="208" r="1.8" fill="#0e4228" opacity="0.5"/>
+    <!-- Wart highlight -->
+    <circle cx="166" cy="200" r="2.5" fill="#5aeaaa" opacity="0.25"/>
+
+    <!-- SINISTER GRIN — wide, showing teeth -->
+    <path d="M 130 212 Q 150 232 170 234 Q 190 232 210 212" stroke="#083820" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 130 212 Q 148 228 170 230 Q 192 228 210 212 Q 200 222 170 224 Q 140 222 130 212 Z" fill="#061a10" opacity="0.7"/>
+    <!-- Teeth showing -->
+    <path d="M 143 218 L 143 226 M 151 220 L 151 228 M 159 221 L 159 229 M 167 222 L 167 230 M 175 222 L 175 230 M 183 221 L 183 229 M 191 220 L 191 228 M 199 218 L 199 226" stroke="#c8e0c0" stroke-width="2.5" stroke-linecap="round" opacity="0.55"/>
+
+    <!-- WILD HAIR front layer -->
+    <g class="whair">
+      <path d="M 94 166 Q 86 100 110 70 Q 130 46 158 42 Q 170 39 182 42 Q 210 48 230 70 Q 252 100 246 166 Q 230 128 206 120 Q 186 112 170 114 Q 154 112 134 120 Q 110 128 94 166 Z" fill="url(#whair)"/>
+      <path d="M 94 166 Q 76 150 73 120 Q 70 94 86 72 Q 98 55 118 47 Q 100 70 100 104 Q 100 138 106 166 Z" fill="#782008" opacity="0.85"/>
+      <path d="M 246 166 Q 264 150 267 120 Q 270 94 254 72 Q 242 55 222 47 Q 240 70 240 104 Q 240 138 234 166 Z" fill="#782008" opacity="0.85"/>
+      <!-- Wild top wisps -->
+      <path d="M 130 50 Q 120 28 128 12" stroke="#a83008" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+      <path d="M 170 45 Q 168 22 176 7" stroke="#b83808" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.6"/>
+      <path d="M 210 50 Q 220 28 212 12" stroke="#a83008" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.7"/>
+    </g>
+
+  </g>
+
+  <!-- Green atmospheric rim -->
+  <ellipse cx="170" cy="240" rx="105" ry="210" fill="none" stroke="#2ee59d" stroke-width="50" opacity="0.035"/>
+
+  <!-- Bottom fade -->
+  <rect x="0" y="380" width="340" height="100" fill="url(#wbg)" opacity="0.55"/>
+
+</svg>

@@ -1,65 +1,129 @@
-import Image from "next/image";
+"use client";
+
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-[#0B0B14] text-[#F2EEF7] overflow-hidden relative">
+      {/* Star background animation */}
+      <div className="star-bg">
+        <div className="star"></div>
+        <div className="star"></div>
+        <div className="star"></div>
+        <div className="star"></div>
+        <div className="star"></div>
+        <div className="star"></div>
+        <div className="star"></div>
+        <div className="star"></div>
+        <div className="star"></div>
+        <div className="star"></div>
+        <div className="star"></div>
+        <div className="star"></div>
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10">
+        {/* Hero Section */}
+        <section className="min-h-screen flex items-center justify-between px-8 md:px-16 py-20">
+          <div className="flex-1 max-w-2xl">
+            <h1 className="font-serif text-6xl md:text-7xl font-bold mb-6" style={{ color: "#E3B84B" }}>
+              Your stars are screaming.
+            </h1>
+            <p className="text-xl md:text-2xl text-[#D4C5F9] mb-8 leading-relaxed">
+              Horror-comedy horoscopes personalized to your birth date. Fictional entertainment for your amusement only.
+            </p>
+            <Link
+              href="/onboarding"
+              className="inline-block px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"
+              style={{
+                backgroundColor: "#E3B84B",
+                color: "#0B0B14",
+              }}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              Dare to see your HorrorScope?
+            </Link>
+          </div>
+
+          {/* Moira Avatar */}
+          <div className="hidden lg:flex flex-1 justify-center items-center relative">
+            <img
+              src="/assets/moira-cheerful.png"
+              alt="Moira - Your HorrorScope Guide"
+              className="w-96 h-96 object-contain drop-shadow-lg"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section className="py-20 px-8 md:px-16 bg-[#111120]">
+          <h2 className="font-serif text-5xl font-bold text-center mb-16" style={{ color: "#E3B84B" }}>
+            How It Works
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Card 1 */}
+            <div className="bg-[#1A1A2E] rounded-lg p-8 border border-[#E3B84B]/20 hover:border-[#E3B84B]/50 transition-all">
+              <div
+                className="text-4xl font-serif font-bold mb-4"
+                style={{ color: "#E3B84B" }}
+              >
+                01
+              </div>
+              <h3 className="font-serif text-2xl font-bold mb-4 text-[#F2EEF7]">
+                Enter Your Birthday
+              </h3>
+              <p className="text-[#D4C5F9] leading-relaxed">
+                Share your birth date and we'll calculate your zodiac sign and generate your personalized horror-comedy reading.
+              </p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="bg-[#1A1A2E] rounded-lg p-8 border border-[#E3B84B]/20 hover:border-[#E3B84B]/50 transition-all">
+              <div
+                className="text-4xl font-serif font-bold mb-4"
+                style={{ color: "#E3B84B" }}
+              >
+                02
+              </div>
+              <h3 className="font-serif text-2xl font-bold mb-4 text-[#F2EEF7]">
+                Get Your Reading
+              </h3>
+              <p className="text-[#D4C5F9] leading-relaxed">
+                Receive your darkly comedic horoscope, complete with unsettling predictions and hilariously ominous advice for your future.
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="bg-[#1A1A2E] rounded-lg p-8 border border-[#E3B84B]/20 hover:border-[#E3B84B]/50 transition-all">
+              <div
+                className="text-4xl font-serif font-bold mb-4"
+                style={{ color: "#E3B84B" }}
+              >
+                03
+              </div>
+              <h3 className="font-serif text-2xl font-bold mb-4 text-[#F2EEF7]">
+                Change Your Fate
+              </h3>
+              <p className="text-[#D4C5F9] leading-relaxed">
+                Use the cosmic insights (with a grain of salt) to navigate your destiny with humor, horror, and a healthy skepticism.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="py-12 px-8 md:px-16 border-t border-[#E3B84B]/20">
+          <div className="max-w-6xl mx-auto">
+            <p className="text-center text-[#D4C5F9] text-sm">
+              HorrorScope is fictional entertainment for entertainment purposes only. Not real astrology or advice. For maximum entertainment, please suspend disbelief.
+            </p>
+            <div className="flex justify-center gap-8 mt-6 text-sm">
+              <a href="#" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Privacy</a>
+              <a href="#" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Terms</a>
+              <a href="#" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Contact</a>
+            </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
