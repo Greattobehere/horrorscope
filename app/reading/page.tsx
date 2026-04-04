@@ -6,7 +6,7 @@ import { toPng } from "html-to-image";
 import PortraitCrossfade from "../components/PortraitCrossfade";
 import ShareCard from "../components/ShareCard";
 
-function ReadingPageInner
+export default function ReadingPage()
 export default function ReadingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPart, setCurrentPart] = useState(1);
