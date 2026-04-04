@@ -5,8 +5,9 @@ import { useSearchParams } from "next/navigation";
 import { toPng } from "html-to-image";
 import PortraitCrossfade from "../components/PortraitCrossfade";
 import ShareCard from "../components/ShareCard";
+import { Suspense } from "react"
 
-export default function ReadingPage() {
+function ReadingPageInner() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPart, setCurrentPart] = useState(1);
   const [copied, setCopied] = useState(false);
@@ -611,6 +612,14 @@ export default function ReadingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ReadingPage() {
+  return (
+    <Suspense fallback={<div style={{color:"white",padding:"2rem"}}>Loading...</div>}>
+      <ReadingPageInner />
+    </Suspense>
   );
 }
 
