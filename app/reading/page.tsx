@@ -31,7 +31,6 @@ function ReadingPageInner() {
   const [aiBrightSide, setAiBrightSide] = useState<string>("");
   const [aiHorrorMirror, setAiHorrorMirror] = useState<string>("");
   const [isLoadingReadings, setIsLoadingReadings] = useState(false);
-  const hasFetchedReadings = useRef(false);
 
   useEffect(() => {
     const storedSign = typeof window !== "undefined" ? localStorage.getItem("horrorscope-sign") : "";
@@ -47,10 +46,12 @@ function ReadingPageInner() {
     }
   }, [querySign]);
 
-  // Fetch AI readings once sign is known
+  // Fetch AI readings after the loading screen completes
   useEffect(() => {
-    if (!sign || hasFetchedReadings.current) return;
-    hasFetchedReadings.current = true;
+    if (isLoading) return; // wait for 3-second loading screen to finish
+    if (!sign) return;
+    if (aiBrightSide && aiHorrorMirror) return; // already have results
+
     setIsLoadingReadings(true);
 
     Promise.all([
@@ -76,7 +77,8 @@ function ReadingPageInner() {
       .finally(() => {
         setIsLoadingReadings(false);
       });
-  }, [sign]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, sign]);
 
   const signLabel = sign ? sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase() : "Scorpio";
 
