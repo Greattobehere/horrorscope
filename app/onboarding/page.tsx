@@ -81,18 +81,20 @@ export default function OnboardingPage() {
       marketingConsent,
       tier,
     });
-    console.log("Onboarding complete:", {
-      birthDate,
-      zodiacSign,
-      email,
-      marketingConsent,
-      tier,
-    });
 
-    // persist sign locally as a fallback and pass via query param
+    // persist sign and email locally
     const normalizedSign = zodiacSign.toLowerCase();
     if (normalizedSign) {
       localStorage.setItem("horrorscope-sign", normalizedSign);
+    }
+    if (email) {
+      localStorage.setItem("horrorscope-email", email);
+      // fire-and-forget welcome email
+      fetch("/api/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      }).catch(() => {});
     }
 
     router.push(`/reading?sign=${encodeURIComponent(normalizedSign)}`);

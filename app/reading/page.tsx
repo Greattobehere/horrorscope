@@ -27,6 +27,12 @@ function ReadingPageInner() {
   const querySign = searchParams?.get("sign") ?? "";
   const [sign, setSign] = useState<string>(querySign || "");
 
+  // AI readings state
+  const [aiBrightSide, setAiBrightSide] = useState<string>("");
+  const [aiHorrorMirror, setAiHorrorMirror] = useState<string>("");
+  const [isLoadingReadings, setIsLoadingReadings] = useState(false);
+  const hasFetchedReadings = useRef(false);
+
   useEffect(() => {
     const storedSign = typeof window !== "undefined" ? localStorage.getItem("horrorscope-sign") : "";
     const normalizedQuerySign = querySign?.toLowerCase() || "";
@@ -40,6 +46,37 @@ function ReadingPageInner() {
       setSign(storedSign.toLowerCase());
     }
   }, [querySign]);
+
+  // Fetch AI readings once sign is known
+  useEffect(() => {
+    if (!sign || hasFetchedReadings.current) return;
+    hasFetchedReadings.current = true;
+    setIsLoadingReadings(true);
+
+    Promise.all([
+      fetch("/api/reading/brightside", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sign }),
+      }),
+      fetch("/api/reading/horror", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sign }),
+      }),
+    ])
+      .then(async ([bsRes, horRes]) => {
+        const [bsData, horData] = await Promise.all([bsRes.json(), horRes.json()]);
+        if (bsData.reading) setAiBrightSide(bsData.reading);
+        if (horData.reading) setAiHorrorMirror(horData.reading);
+      })
+      .catch(() => {
+        // fallback to static readings
+      })
+      .finally(() => {
+        setIsLoadingReadings(false);
+      });
+  }, [sign]);
 
   const signLabel = sign ? sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase() : "Scorpio";
 
@@ -89,27 +126,27 @@ function ReadingPageInner() {
   > = {
     aries: {
       brightSide: `Oh Aries, today your fire is magnetic. You will charm a cashier with a joke and then immediately forget your card, but who cares — adventure has now RSVP'd to your life.`,
-      horrorMirror: `Aries, you thought you could skip the meeting, but your boss just typed 'can we talk' into Slack in all caps. Your epic streak of “I got this” ends with you taking the team victory lap in the next brainstorm humiliation arena.`,
+      horrorMirror: `Aries, you thought you could skip the meeting, but your boss just typed 'can we talk' into Slack in all caps. Your epic streak of "I got this" ends with you taking the team victory lap in the next brainstorm humiliation arena.`,
     },
     taurus: {
-      brightSide: `Taurus, your comfort priorities are paying off. Your coffee tastes like success and your savings account is low-key flexing. Keep it cozy, keep it sure, and maybe finish that to-do list you’ve been gently ignoring.`,
-      horrorMirror: `Taurus, your two-hour nap turned into a 26-hour sleep coma. Your fridge feels betrayed. The universe draft-marks your “passive resistance” into a responsibility avalanche, and you’ll watch the shoelace incident in HD.`,
+      brightSide: `Taurus, your comfort priorities are paying off. Your coffee tastes like success and your savings account is low-key flexing. Keep it cozy, keep it sure, and maybe finish that to-do list you've been gently ignoring.`,
+      horrorMirror: `Taurus, your two-hour nap turned into a 26-hour sleep coma. Your fridge feels betrayed. The universe draft-marks your "passive resistance" into a responsibility avalanche, and you'll watch the shoelace incident in HD.`,
     },
     gemini: {
-      brightSide: `Gemini, your duality is delightful. You’ve got a new meme rotation ready and one contact thinks you’re a visionary while another thinks you’re a serial texter. Both are absolutely right.`,
-      horrorMirror: `Gemini, you post one opinion and 87 people ask you to clarify immediately. In your own mind you’re debating whether the idea is genius or cringe — and the algorithm does neither.`,
+      brightSide: `Gemini, your duality is delightful. You've got a new meme rotation ready and one contact thinks you're a visionary while another thinks you're a serial texter. Both are absolutely right.`,
+      horrorMirror: `Gemini, you post one opinion and 87 people ask you to clarify immediately. In your own mind you're debating whether the idea is genius or cringe — and the algorithm does neither.`,
     },
     cancer: {
-      brightSide: `Cancer, your empathy is your superpower. A stranger may cry in your grocery checkout line, and you’ll hand them a tiny tissue like a hero. Their gratitude becomes your warm glow for the rest of the week.`,
-      horrorMirror: `Cancer, your home vibes are endangered. One passive-aggressive sock complaint turns into a full house civil trial. You’ll cry, then rewrite the apology email, then cry again watching the apology email to the apology email.`,
+      brightSide: `Cancer, your empathy is your superpower. A stranger may cry in your grocery checkout line, and you'll hand them a tiny tissue like a hero. Their gratitude becomes your warm glow for the rest of the week.`,
+      horrorMirror: `Cancer, your home vibes are endangered. One passive-aggressive sock complaint turns into a full house civil trial. You'll cry, then rewrite the apology email, then cry again watching the apology email to the apology email.`,
     },
     leo: {
       brightSide: `Leo, the spotlight has your name on it today. You walk into a room and the background music changes in your honor. Own it, laugh loudly, and make someone else feel famous by accident.`,
-      horrorMirror: `Leo, your selfie game is strong except for the one screenshot your ex still has from 2019. Today it resurfaces in an unflattering PDF at work. The horror is not the photo, it’s the caption you wrote at 2 a.m.`,
+      horrorMirror: `Leo, your selfie game is strong except for the one screenshot your ex still has from 2019. Today it resurfaces in an unflattering PDF at work. The horror is not the photo, it's the caption you wrote at 2 a.m.`,
     },
     virgo: {
-      brightSide: `Virgo, your checklist is a masterpiece that someone else will accidentally steal. You’ll fix a typo no one knew existed and silently take a victory sip of water.`,
-      horrorMirror: `Virgo, the cosmos coordinates a first date that runs exactly 12 minutes too long for your patience. You will analyze everyone’s grammar. You will regret nothing.`,
+      brightSide: `Virgo, your checklist is a masterpiece that someone else will accidentally steal. You'll fix a typo no one knew existed and silently take a victory sip of water.`,
+      horrorMirror: `Virgo, the cosmos coordinates a first date that runs exactly 12 minutes too long for your patience. You will analyze everyone's grammar. You will regret nothing.`,
     },
     libra: {
       brightSide: `Libra, balance is your aesthetic. You will coach two friends through a decision while flawlessly calibrating your own mood palette. The universe applauds your diplomatic boss energy.`,
@@ -120,16 +157,16 @@ function ReadingPageInner() {
       horrorMirror: `Oh, Scorpio. We need to discuss the grudge. The one from 2019. Today it will resurface at the worst possible moment — specifically during a meeting where someone uses an identical tone of voice to the original offender. You will hold it together. But your left eye will twitch exactly once. Everyone will notice. No one will say anything. They know.`,
     },
     sagittarius: {
-      brightSide: `Sagittarius, curiosity is your passport. You’ll say “yes” to something wild and afterwards realize you’ve actually learned one useful thing and ten hilarious one-liners.`,
-      horrorMirror: `Sagittarius, your “I can do five things at once” energy blows up in a good way, then collapses into a fantasy-operated instant noodle incident. Your optimism might click the smoke alarm for attention.`,
+      brightSide: `Sagittarius, curiosity is your passport. You'll say "yes" to something wild and afterwards realize you've actually learned one useful thing and ten hilarious one-liners.`,
+      horrorMirror: `Sagittarius, your "I can do five things at once" energy blows up in a good way, then collapses into a fantasy-operated instant noodle incident. Your optimism might click the smoke alarm for attention.`,
     },
     capricorn: {
       brightSide: `Capricorn, your grind is stylish. Every productivity tool trembles if it does not contain your name. Rejoice in your tiny wins; they are real and terrifyingly effective.`,
-      horrorMirror: `Capricorn, you finally accepted an invitation to relax. It lasted 7 minutes before you checked your email and accidentally forwarded the to-do list with “plan urgent” to the person responsible for chores.`,
+      horrorMirror: `Capricorn, you finally accepted an invitation to relax. It lasted 7 minutes before you checked your email and accidentally forwarded the to-do list with "plan urgent" to the person responsible for chores.`,
     },
     aquarius: {
       brightSide: `Aquarius, your idea bubble is glittering. You will invent a new ritual involving 3 candles and one spreadsheet, and someone will call you a genius misfit in the best way.`,
-      horrorMirror: `Aquarius, your big idea is now a minor scandal because you forgot to mention the 14 people you alienated while pursuing it. You’ll half-apologize via meme and fully regret not bringing snacks.`,
+      horrorMirror: `Aquarius, your big idea is now a minor scandal because you forgot to mention the 14 people you alienated while pursuing it. You'll half-apologize via meme and fully regret not bringing snacks.`,
     },
     pisces: {
       brightSide: `Pisces, your imagination is a refuge and a rocket ship. You will write a beautiful message that makes someone weep with gratitude, and then get lost in the clouds for an hour.`,
@@ -143,6 +180,10 @@ function ReadingPageInner() {
   const brightSideText = signReading.brightSide;
   const horrorMirrorText = signReading.horrorMirror;
 
+  // Use AI reading if available, fall back to static
+  const displayBrightSide = aiBrightSide || brightSideText;
+  const displayHorrorMirror = aiHorrorMirror || horrorMirrorText;
+
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 3000);
     return () => clearTimeout(timer);
@@ -150,7 +191,6 @@ function ReadingPageInner() {
 
   const handleSliderChange = (key: string, value: number) => {
     setSliders((prev) => ({ ...prev, [key]: value }));
-    // Trigger burn-glow when a slider changes
     crossfadeBurnRef.current = {
       i: 1,
       r: 1,
@@ -162,32 +202,32 @@ function ReadingPageInner() {
 
   const getStaticFate = (score: number, label: string) => {
     const doomIndex = Math.min(4, Math.floor(score / 20));
-    const bandName = doomIndex === 0 ? “Doomed” : doomIndex === 1 ? “Troubled” : doomIndex === 2 ? “Uncertain” : doomIndex === 3 ? “Promising” : “Blessed”;
+    const bandName = doomIndex === 0 ? "Doomed" : doomIndex === 1 ? "Troubled" : doomIndex === 2 ? "Uncertain" : doomIndex === 3 ? "Promising" : "Blessed";
     const fateMessagesPerBand: Record<number, string[]> = {
       0: [
         `Doomed, ${label}. Your pulse is a haunted metronome, and the only thing growing faster than your anxiety is your willingness to laugh as the abyss takes notes.`,
-        `The stars say: You turned ‘threat level red’ into an art project. Today, the universe will gift you one terrifyingly accurate reminder that ghost stories are just job security for your nightmares.`,
-        `If fate were a meme, you’d be the GIF that auto-repeats in slow motion. The darkest jokes are about the ones who still think they can leave early.`,
+        `The stars say: You turned 'threat level red' into an art project. Today, the universe will gift you one terrifyingly accurate reminder that ghost stories are just job security for your nightmares.`,
+        `If fate were a meme, you'd be the GIF that auto-repeats in slow motion. The darkest jokes are about the ones who still think they can leave early.`,
       ],
       1: [
-        `Troubled, ${label}. You’re balancing on a rope that is definitely judgmental. Expect a surprise with the tone of ‘remember when you swore you’d change?’ and the consequences of ignoring that inner cat voice.`,
+        `Troubled, ${label}. You're balancing on a rope that is definitely judgmental. Expect a surprise with the tone of 'remember when you swore you'd change?' and the consequences of ignoring that inner cat voice.`,
         `Witty warning: Your current choices are like adding glitter to a broken spell. It looks cute, but cleanup is still going to take forever.`,
         `The cosmos says: Your dreams are valuable, but your timing is a little 3 a.m. text message, so brace for deliciously awkward payback.`,
       ],
       2: [
-        `Uncertain, ${label}. You are teetering between “strategic genius” and “please help”. The universe can’t decide either; it’s sending random clues disguised as reuseable memes.`,
+        `Uncertain, ${label}. You are teetering between "strategic genius" and "please help". The universe can't decide either; it's sending random clues disguised as reuseable memes.`,
         `You are at 50/50 luck, like choosing the right line at 7-11. One more push and you get a free coffee. One less and you get stale chips.`,
-        `Teasing fate: You’re in the middle of a plot twist that will either make you unapologetically smug or delightfully humble. Pick your side with style.`,
+        `Teasing fate: You're in the middle of a plot twist that will either make you unapologetically smug or delightfully humble. Pick your side with style.`,
       ],
       3: [
         `Promising, ${label}. Your choices are generating quiet miracles: someone hears the perfect joke at the perfect time, and the universe will give you a nod you can feel in your bones.`,
-        `Warmly, your path is bright enough to cast soft gold shadows. Today’s omen is a perfectly brewed cup of confidence.`,
+        `Warmly, your path is bright enough to cast soft gold shadows. Today's omen is a perfectly brewed cup of confidence.`,
         `Your stars are smiling. Expect the sort of small wins that taste like champagne and make your past self high-five you from the good habits aisle.`,
       ],
       4: [
-        `Blessed, ${label}! The cosmos is serving you fireworks with a side of empowerment. Your future is basically an influencer caption that’s too good to be true.`,
-        `Ecstatic energy: you’re on a roll so smooth the universe forgot to pause for plot twists. Enjoy your victory lap, you earned it with grace and a little insane courage.`,
-        `Over-the-top: The gods are taking notes on your manifesting ability. Today’s blessings are delivered by a choir of lucky puppies and complimentary velvet ropes.`,
+        `Blessed, ${label}! The cosmos is serving you fireworks with a side of empowerment. Your future is basically an influencer caption that's too good to be true.`,
+        `Ecstatic energy: you're on a roll so smooth the universe forgot to pause for plot twists. Enjoy your victory lap, you earned it with grace and a little insane courage.`,
+        `Over-the-top: The gods are taking notes on your manifesting ability. Today's blessings are delivered by a choir of lucky puppies and complimentary velvet ropes.`,
       ],
     };
     const fateArray = fateMessagesPerBand[doomIndex];
@@ -197,17 +237,17 @@ function ReadingPageInner() {
 
   const handleRewriteFate = async () => {
     setShowFate(false);
-    setFateMessage(“Sireal is consulting the void...”);
+    setFateMessage("Sireal is consulting the void...");
     setTimeout(() => setShowFate(true), 10);
 
     try {
-      const response = await fetch(“/api/reading”, {
-        method: “POST”,
-        headers: { “Content-Type”: “application/json” },
+      const response = await fetch("/api/reading", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sign: currentSign, omenScore }),
       });
 
-      if (!response.ok) throw new Error(“API error”);
+      if (!response.ok) throw new Error("API error");
 
       const data = await response.json();
       if (data.reading) {
@@ -243,7 +283,6 @@ function ReadingPageInner() {
       setIsSharing(true);
       setShareStatus("Generating...");
 
-      // Render the ShareCard in hidden DOM
       if (shareCardRef.current) {
         const dataUrl = await toPng(shareCardRef.current, { cacheBust: true });
         const response = await fetch(dataUrl);
@@ -304,10 +343,10 @@ function ReadingPageInner() {
         `}</style>
         <div className="text-center">
           <div className="pulse-border border-4 border-[#E3B84B] rounded-lg p-8 w-96 h-96 flex items-center justify-center mb-8">
-            <img src="/assets/moira-cheerful.png" alt="Moira the fortune teller" style={{width: "280px", height: "auto"}} />
+            <img src="/assets/moira-cheerful.png" alt="Sireal the fortune teller" style={{width: "280px", height: "auto"}} />
           </div>
           <h2 className="font-serif text-3xl font-bold" style={{ color: "#E3B84B" }}>
-            Moira is consulting the stars...
+            Sireal is consulting the stars...
           </h2>
           <p className="text-[#D4C5F9] mt-4">Your reading awaits, dear {signLabel}</p>
         </div>
@@ -328,6 +367,16 @@ function ReadingPageInner() {
         .flicker {
           animation: screen-flicker 0.5s infinite;
         }
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        .reading-shimmer {
+          background: linear-gradient(90deg, #1A1A2E 25%, #2a2a4e 50%, #1A1A2E 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 6px;
+        }
       `}</style>
 
       <div className="max-w-4xl mx-auto">
@@ -344,18 +393,29 @@ function ReadingPageInner() {
           <div className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="border-4 border-[#E3B84B] rounded-lg p-6 h-96 flex items-center justify-center">
-                <img src="/assets/moira-cheerful.png" alt="Moira the fortune teller" style={{width: "280px", height: "auto"}} />
+                <img src="/assets/moira-cheerful.png" alt="Sireal the fortune teller" style={{width: "280px", height: "auto"}} />
               </div>
 
               <div className="bg-[#1A1A2E] border-2 border-[#E3B84B] rounded-lg p-8">
                 <h2 className="font-serif text-4xl font-bold mb-6" style={{ color: "#E3B84B" }}>
                   The Bright Side
                 </h2>
-                <p className="text-[#D4C5F9] leading-relaxed text-lg mb-8">{brightSideText}</p>
+                {isLoadingReadings && !aiBrightSide ? (
+                  <div className="mb-8 space-y-3">
+                    <div className="reading-shimmer h-4 w-full" />
+                    <div className="reading-shimmer h-4 w-5/6" />
+                    <div className="reading-shimmer h-4 w-4/5" />
+                    <div className="reading-shimmer h-4 w-full" />
+                    <p className="text-[#D4C5F9]/60 text-sm mt-4">Sireal is channeling the stars...</p>
+                  </div>
+                ) : (
+                  <p className="text-[#D4C5F9] leading-relaxed text-lg mb-8">{displayBrightSide}</p>
+                )}
                 <div className="flex gap-4">
                   <button
-                    onClick={() => handleShare(brightSideText)}
-                    className="px-6 py-2 bg-[#E3B84B]/20 text-[#E3B84B] rounded-lg hover:bg-[#E3B84B]/30 transition font-semibold"
+                    onClick={() => handleShare(displayBrightSide)}
+                    disabled={isLoadingReadings && !aiBrightSide}
+                    className="px-6 py-2 bg-[#E3B84B]/20 text-[#E3B84B] rounded-lg hover:bg-[#E3B84B]/30 transition font-semibold disabled:opacity-40"
                   >
                     {copied ? "✓ Copied!" : "Share"}
                   </button>
@@ -386,21 +446,32 @@ function ReadingPageInner() {
                 animation: screen-flicker 0.5s infinite;
               }
             `}</style>
-            
+
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="flicker border-4 rounded-lg p-6 h-96 flex items-center justify-center" style={{ borderColor: "#2EE59D" }}>
-                <img src="/assets/witch-moira.png" alt="Witch Moira" style={{width: "280px", height: "auto"}} />
+                <img src="/assets/witch-moira.png" alt="Witch Sireal" style={{width: "280px", height: "auto"}} />
               </div>
 
               <div className="bg-[#1A1A2E] rounded-lg p-8" style={{ borderColor: "#2EE59D", borderWidth: "2px" }}>
                 <h2 className="font-serif text-4xl font-bold mb-6" style={{ color: "#2EE59D" }}>
                   The Horror Mirror
                 </h2>
-                <p className="text-[#D4C5F9] leading-relaxed text-lg mb-8">{horrorMirrorText}</p>
+                {isLoadingReadings && !aiHorrorMirror ? (
+                  <div className="mb-8 space-y-3">
+                    <div className="reading-shimmer h-4 w-full" />
+                    <div className="reading-shimmer h-4 w-5/6" />
+                    <div className="reading-shimmer h-4 w-4/5" />
+                    <div className="reading-shimmer h-4 w-full" />
+                    <p className="text-[#D4C5F9]/60 text-sm mt-4">Witch Sireal is peering into the mirror...</p>
+                  </div>
+                ) : (
+                  <p className="text-[#D4C5F9] leading-relaxed text-lg mb-8">{displayHorrorMirror}</p>
+                )}
                 <div className="flex gap-4">
                   <button
-                    onClick={() => handleShare(horrorMirrorText)}
-                    className="px-6 py-2 rounded-lg hover:opacity-80 transition font-semibold"
+                    onClick={() => handleShare(displayHorrorMirror)}
+                    disabled={isLoadingReadings && !aiHorrorMirror}
+                    className="px-6 py-2 rounded-lg hover:opacity-80 transition font-semibold disabled:opacity-40"
                     style={{
                       backgroundColor: "#2EE59D/20",
                       color: "#2EE59D",
@@ -639,4 +710,3 @@ export default function ReadingPage() {
     </Suspense>
   );
 }
-

@@ -44,11 +44,11 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Moira Avatar */}
+          {/* Sireal Avatar */}
           <div className="hidden lg:flex flex-1 justify-center items-center relative">
             <img
               src="/assets/moira-cheerful.png"
-              alt="Moira - Your HorrorScope Guide"
+              alt="Sireal - Your HorrorScope Guide"
               className="w-96 h-96 object-contain drop-shadow-lg"
             />
           </div>

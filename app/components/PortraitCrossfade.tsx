@@ -68,7 +68,7 @@ export default function PortraitCrossfade({
       {/* Witch form — omen ≤ 33 */}
       <img
         src={WITCH_SRC}
-        alt="Witch Moira"
+        alt="Witch Sireal"
         className={`${className} transition-opacity duration-[1500ms] absolute inset-0`}
         draggable={false}
         aria-hidden="true"
@@ -81,7 +81,7 @@ export default function PortraitCrossfade({
       {/* Mid form (haunted) — 33 < omen < 67 */}
       <img
         src={HAUNTED_SRC}
-        alt="Haunted Moira"
+        alt="Haunted Sireal"
         className={`${className} transition-opacity duration-[1500ms] absolute inset-0`}
         draggable={false}
         aria-hidden="true"
@@ -94,7 +94,7 @@ export default function PortraitCrossfade({
       {/* Friendly form — omen ≥ 67 */}
       <img
         src={FRIENDLY_SRC}
-        alt="Cheerful Moira"
+        alt="Cheerful Sireal"
         className={`${className} transition-opacity duration-[1500ms] absolute inset-0`}
         draggable={false}
         aria-hidden="true"
