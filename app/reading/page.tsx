@@ -160,51 +160,68 @@ function ReadingPageInner() {
 
   const [showFate, setShowFate] = useState(false);
 
-  const handleRewriteFate = () => {
-    const traits = [
-      sliders.love > 7 ? "generous" : "jealous",
-      sliders.wealth > 7 ? "secure" : "scrappy",
-      sliders.health > 7 ? "vital" : "frazzled",
-      sliders.fame > 7 ? "iconic" : "low-key",
-      sliders.wisdom > 7 ? "sage" : "clueless",
-    ];
-
-    const doomIndex = Math.min(4, Math.floor(omenScore / 20));
-    const bandName = doomIndex === 0 ? "Doomed" : doomIndex === 1 ? "Troubled" : doomIndex === 2 ? "Uncertain" : doomIndex === 3 ? "Promising" : "Blessed";
-
+  const getStaticFate = (score: number, label: string) => {
+    const doomIndex = Math.min(4, Math.floor(score / 20));
+    const bandName = doomIndex === 0 ? “Doomed” : doomIndex === 1 ? “Troubled” : doomIndex === 2 ? “Uncertain” : doomIndex === 3 ? “Promising” : “Blessed”;
     const fateMessagesPerBand: Record<number, string[]> = {
       0: [
-        `Doomed, ${signLabel}. Your pulse is a haunted metronome, and the only thing growing faster than your anxiety is your willingness to laugh as the abyss takes notes.`,
-        `The stars say: You turned 'threat level red' into an art project. Today, the universe will gift you one terrifyingly accurate reminder that ghost stories are just job security for your nightmares.`,
-        `If fate were a meme, you'd be the GIF that auto-repeats in slow motion. The darkest jokes are about the ones who still think they can leave early.`,
+        `Doomed, ${label}. Your pulse is a haunted metronome, and the only thing growing faster than your anxiety is your willingness to laugh as the abyss takes notes.`,
+        `The stars say: You turned ‘threat level red’ into an art project. Today, the universe will gift you one terrifyingly accurate reminder that ghost stories are just job security for your nightmares.`,
+        `If fate were a meme, you’d be the GIF that auto-repeats in slow motion. The darkest jokes are about the ones who still think they can leave early.`,
       ],
       1: [
-        `Troubled, ${signLabel}. You’re balancing on a rope that is definitely judgmental. Expect a surprise with the tone of 'remember when you swore you'd change?' and the consequences of ignoring that inner cat voice.`,
+        `Troubled, ${label}. You’re balancing on a rope that is definitely judgmental. Expect a surprise with the tone of ‘remember when you swore you’d change?’ and the consequences of ignoring that inner cat voice.`,
         `Witty warning: Your current choices are like adding glitter to a broken spell. It looks cute, but cleanup is still going to take forever.`,
         `The cosmos says: Your dreams are valuable, but your timing is a little 3 a.m. text message, so brace for deliciously awkward payback.`,
       ],
       2: [
-        `Uncertain, ${signLabel}. You are teetering between “strategic genius” and “please help”. The universe can’t decide either; it’s sending random clues disguised as reuseable memes.`,
+        `Uncertain, ${label}. You are teetering between “strategic genius” and “please help”. The universe can’t decide either; it’s sending random clues disguised as reuseable memes.`,
         `You are at 50/50 luck, like choosing the right line at 7-11. One more push and you get a free coffee. One less and you get stale chips.`,
         `Teasing fate: You’re in the middle of a plot twist that will either make you unapologetically smug or delightfully humble. Pick your side with style.`,
       ],
       3: [
-        `Promising, ${signLabel}. Your choices are generating quiet miracles: someone hears the perfect joke at the perfect time, and the universe will give you a nod you can feel in your bones.`,
+        `Promising, ${label}. Your choices are generating quiet miracles: someone hears the perfect joke at the perfect time, and the universe will give you a nod you can feel in your bones.`,
         `Warmly, your path is bright enough to cast soft gold shadows. Today’s omen is a perfectly brewed cup of confidence.`,
         `Your stars are smiling. Expect the sort of small wins that taste like champagne and make your past self high-five you from the good habits aisle.`,
       ],
       4: [
-        `Blessed, ${signLabel}! The cosmos is serving you fireworks with a side of empowerment. Your future is basically an influencer caption that's too good to be true.`,
-        `Ecstatic energy: you're on a roll so smooth the universe forgot to pause for plot twists. Enjoy your victory lap, you earned it with grace and a little insane courage.`,
+        `Blessed, ${label}! The cosmos is serving you fireworks with a side of empowerment. Your future is basically an influencer caption that’s too good to be true.`,
+        `Ecstatic energy: you’re on a roll so smooth the universe forgot to pause for plot twists. Enjoy your victory lap, you earned it with grace and a little insane courage.`,
         `Over-the-top: The gods are taking notes on your manifesting ability. Today’s blessings are delivered by a choir of lucky puppies and complimentary velvet ropes.`,
       ],
     };
-
     const fateArray = fateMessagesPerBand[doomIndex];
     const randomFate = fateArray[Math.floor(Math.random() * fateArray.length)];
+    return `${bandName} ${score} | ${randomFate}`;
+  };
 
-    setFateMessage(`${bandName} ${omenScore} | ${randomFate}`);
+  const handleRewriteFate = async () => {
     setShowFate(false);
+    setFateMessage(“Sireal is consulting the void...”);
+    setTimeout(() => setShowFate(true), 10);
+
+    try {
+      const response = await fetch(“/api/reading”, {
+        method: “POST”,
+        headers: { “Content-Type”: “application/json” },
+        body: JSON.stringify({ sign: currentSign, omenScore }),
+      });
+
+      if (!response.ok) throw new Error(“API error”);
+
+      const data = await response.json();
+      if (data.reading) {
+        setShowFate(false);
+        setFateMessage(data.reading);
+        setTimeout(() => setShowFate(true), 10);
+        return;
+      }
+    } catch {
+      // fall through to static fallback
+    }
+
+    setShowFate(false);
+    setFateMessage(getStaticFate(omenScore, signLabel));
     setTimeout(() => setShowFate(true), 10);
   };
 
