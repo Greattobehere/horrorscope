@@ -6,6 +6,7 @@ import { toPng } from "html-to-image";
 import PortraitCrossfade from "../components/PortraitCrossfade";
 import ShareCard from "../components/ShareCard";
 import { Suspense } from "react"
+import { READINGS, getReadingIndex } from "../data/readings";
 
 function ReadingPageInner() {
   const [isLoading, setIsLoading] = useState(true);
@@ -122,65 +123,11 @@ function ReadingPageInner() {
 
   const omenScore = computeOmenScore(sliders);
 
-  const SIGN_READINGS: Record<
-    string,
-    { brightSide: string; horrorMirror: string }
-  > = {
-    aries: {
-      brightSide: `Oh Aries, today your fire is magnetic. You will charm a cashier with a joke and then immediately forget your card, but who cares — adventure has now RSVP'd to your life.`,
-      horrorMirror: `Aries, you thought you could skip the meeting, but your boss just typed 'can we talk' into Slack in all caps. Your epic streak of "I got this" ends with you taking the team victory lap in the next brainstorm humiliation arena.`,
-    },
-    taurus: {
-      brightSide: `Taurus, your comfort priorities are paying off. Your coffee tastes like success and your savings account is low-key flexing. Keep it cozy, keep it sure, and maybe finish that to-do list you've been gently ignoring.`,
-      horrorMirror: `Taurus, your two-hour nap turned into a 26-hour sleep coma. Your fridge feels betrayed. The universe draft-marks your "passive resistance" into a responsibility avalanche, and you'll watch the shoelace incident in HD.`,
-    },
-    gemini: {
-      brightSide: `Gemini, your duality is delightful. You've got a new meme rotation ready and one contact thinks you're a visionary while another thinks you're a serial texter. Both are absolutely right.`,
-      horrorMirror: `Gemini, you post one opinion and 87 people ask you to clarify immediately. In your own mind you're debating whether the idea is genius or cringe — and the algorithm does neither.`,
-    },
-    cancer: {
-      brightSide: `Cancer, your empathy is your superpower. A stranger may cry in your grocery checkout line, and you'll hand them a tiny tissue like a hero. Their gratitude becomes your warm glow for the rest of the week.`,
-      horrorMirror: `Cancer, your home vibes are endangered. One passive-aggressive sock complaint turns into a full house civil trial. You'll cry, then rewrite the apology email, then cry again watching the apology email to the apology email.`,
-    },
-    leo: {
-      brightSide: `Leo, the spotlight has your name on it today. You walk into a room and the background music changes in your honor. Own it, laugh loudly, and make someone else feel famous by accident.`,
-      horrorMirror: `Leo, your selfie game is strong except for the one screenshot your ex still has from 2019. Today it resurfaces in an unflattering PDF at work. The horror is not the photo, it's the caption you wrote at 2 a.m.`,
-    },
-    virgo: {
-      brightSide: `Virgo, your checklist is a masterpiece that someone else will accidentally steal. You'll fix a typo no one knew existed and silently take a victory sip of water.`,
-      horrorMirror: `Virgo, the cosmos coordinates a first date that runs exactly 12 minutes too long for your patience. You will analyze everyone's grammar. You will regret nothing.`,
-    },
-    libra: {
-      brightSide: `Libra, balance is your aesthetic. You will coach two friends through a decision while flawlessly calibrating your own mood palette. The universe applauds your diplomatic boss energy.`,
-      horrorMirror: `Libra, that 9-page pros/cons spreadsheet you made for a sandwich is about to be exposed by your critique-hungry roommate. Your peace treaty becomes a courtroom drama at 11 p.m.`,
-    },
-    scorpio: {
-      brightSide: `Scorpio, your intensity is an art form. Today is for quiet conspiracies, secret kindness, and the sneaky victory of watching doubt become regret in someone who underestimated you.`,
-      horrorMirror: `Oh, Scorpio. We need to discuss the grudge. The one from 2019. Today it will resurface at the worst possible moment — specifically during a meeting where someone uses an identical tone of voice to the original offender. You will hold it together. But your left eye will twitch exactly once. Everyone will notice. No one will say anything. They know.`,
-    },
-    sagittarius: {
-      brightSide: `Sagittarius, curiosity is your passport. You'll say "yes" to something wild and afterwards realize you've actually learned one useful thing and ten hilarious one-liners.`,
-      horrorMirror: `Sagittarius, your "I can do five things at once" energy blows up in a good way, then collapses into a fantasy-operated instant noodle incident. Your optimism might click the smoke alarm for attention.`,
-    },
-    capricorn: {
-      brightSide: `Capricorn, your grind is stylish. Every productivity tool trembles if it does not contain your name. Rejoice in your tiny wins; they are real and terrifyingly effective.`,
-      horrorMirror: `Capricorn, you finally accepted an invitation to relax. It lasted 7 minutes before you checked your email and accidentally forwarded the to-do list with "plan urgent" to the person responsible for chores.`,
-    },
-    aquarius: {
-      brightSide: `Aquarius, your idea bubble is glittering. You will invent a new ritual involving 3 candles and one spreadsheet, and someone will call you a genius misfit in the best way.`,
-      horrorMirror: `Aquarius, your big idea is now a minor scandal because you forgot to mention the 14 people you alienated while pursuing it. You'll half-apologize via meme and fully regret not bringing snacks.`,
-    },
-    pisces: {
-      brightSide: `Pisces, your imagination is a refuge and a rocket ship. You will write a beautiful message that makes someone weep with gratitude, and then get lost in the clouds for an hour.`,
-      horrorMirror: `Pisces, your dream voicemail turned eerie when you accidentally sent it to your boss. It contains 70% stardust and 30% existential whispers. HR will be confused.`,
-    },
-  };
-
   const currentSign = sign.toLowerCase() || "scorpio";
-  const signReading = SIGN_READINGS[currentSign] || SIGN_READINGS["scorpio"];
+  const readingIndex = getReadingIndex();
 
-  const brightSideText = signReading.brightSide;
-  const horrorMirrorText = signReading.horrorMirror;
+  const brightSideText = READINGS[currentSign]?.brightSide[readingIndex] ?? READINGS["scorpio"].brightSide[readingIndex];
+  const horrorMirrorText = READINGS[currentSign]?.horrorMirror[readingIndex] ?? READINGS["scorpio"].horrorMirror[readingIndex];
 
   // Use AI reading if available, fall back to static
   const displayBrightSide = aiBrightSide || brightSideText;
