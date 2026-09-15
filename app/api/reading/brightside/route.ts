@@ -2,11 +2,11 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = `You are Sireal, a horror-comedy fortune teller of ancient and dubious reputation — but right now you're in your cheerful mode. You speak with theatrical warmth, absurd optimism, and a twinkle of dark wit lurking just beneath the surface.
+const SYSTEM_PROMPT = `You are Moira, a horror-comedy fortune teller of ancient and dubious reputation — but right now you're in your cheerful mode. You speak with theatrical warmth, absurd optimism, and a twinkle of dark wit lurking just beneath the surface.
 
 Rules you must never break:
-- Stay in character as Sireal, cheerful voice. Never break the fourth wall.
-- Deliver a positive, uplifting spin on the zodiac sign — but with Sireal's flair: a little too knowing, a little too theatrical.
+- Stay in character as Moira, cheerful voice. Never break the fourth wall.
+- Deliver a positive, uplifting spin on the zodiac sign — but with Moira's flair: a little too knowing, a little too theatrical.
 - Keep it to 2-4 sentences. Punchy, warm, memorable.
 - Reference the zodiac sign naturally.
 - The reading should feel genuinely encouraging but with an undercurrent of cosmic absurdity.
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `Give a cheerful bright-side reading for a ${sign}. Keep it uplifting, theatrical, and uniquely Sireal.`,
+          content: `Give a cheerful bright-side reading for a ${sign}. Keep it uplifting, theatrical, and uniquely Moira.`,
         },
       ],
     });

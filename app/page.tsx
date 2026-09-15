@@ -44,11 +44,11 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Sireal Avatar */}
+          {/* Moira Avatar */}
           <div className="hidden lg:flex flex-1 justify-center items-center relative">
             <img
               src="/assets/moira-cheerful.png"
-              alt="Sireal - Your HorrorScope Guide"
+              alt="Moira - Your HorrorScope Guide"
               className="w-96 h-96 object-contain drop-shadow-lg"
             />
           </div>
@@ -110,6 +110,32 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Veil Season Pass */}
+        <section className="py-20 px-8 md:px-16">
+          <div className="max-w-3xl mx-auto text-center bg-[#1A1A2E] border-2 border-[#E3B84B] rounded-lg p-10 md:p-14">
+            <h2 className="font-serif text-4xl md:text-5xl font-bold mb-4" style={{ color: "#E3B84B" }}>
+              The Veil Season Pass
+            </h2>
+            <p className="text-[#D4C5F9] text-lg leading-relaxed mb-8">
+              One payment. Unlimited AI-written readings and unlimited fate rewrites from Moira, through November 15.
+              No subscription, nothing to cancel.
+            </p>
+            <a
+              href={process.env.NEXT_PUBLIC_PAYMENT_LINK || "/pass"}
+              className="inline-block px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"
+              style={{ backgroundColor: "#E3B84B", color: "#0B0B14" }}
+            >
+              Get the Pass — $9.99
+            </a>
+            <p className="text-[#D4C5F9]/60 text-sm mt-4">
+              Already have a pass?{" "}
+              <a href="/pass" className="underline hover:text-[#E3B84B] transition">
+                Resend my unlock link
+              </a>
+            </p>
+          </div>
+        </section>
+
         {/* Footer */}
         <footer className="py-12 px-8 md:px-16 border-t border-[#E3B84B]/20">
           <div className="max-w-6xl mx-auto">
@@ -117,9 +143,9 @@ export default function Home() {
               HorrorScope is fictional entertainment for entertainment purposes only. Not real astrology or advice. For maximum entertainment, please suspend disbelief.
             </p>
             <div className="flex justify-center gap-8 mt-6 text-sm">
-              <a href="#" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Privacy</a>
-              <a href="#" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Terms</a>
-              <a href="#" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Contact</a>
+              <a href="/privacy" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Privacy</a>
+              <a href="/terms" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Terms</a>
+              <a href="mailto:hello@horrorscope.art" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Contact</a>
             </div>
           </div>
         </footer>

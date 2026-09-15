@@ -15,6 +15,7 @@ function ReadingPageInner() {
   const [isSharing, setIsSharing] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [fateMessage, setFateMessage] = useState("");
+  const [needsPass, setNeedsPass] = useState(false);
   const shareCardRef = useRef<HTMLDivElement | null>(null);
   const [sliders, setSliders] = useState({
     love: 5,
@@ -186,7 +187,8 @@ function ReadingPageInner() {
 
   const handleRewriteFate = async () => {
     setShowFate(false);
-    setFateMessage("Sireal is consulting the void...");
+    setNeedsPass(false);
+    setFateMessage("Moira is consulting the void...");
     setTimeout(() => setShowFate(true), 10);
 
     try {
@@ -196,14 +198,18 @@ function ReadingPageInner() {
         body: JSON.stringify({ sign: currentSign, omenScore }),
       });
 
-      if (!response.ok) throw new Error("API error");
-
-      const data = await response.json();
-      if (data.reading) {
-        setShowFate(false);
-        setFateMessage(data.reading);
-        setTimeout(() => setShowFate(true), 10);
-        return;
+      if (response.status === 402) {
+        setNeedsPass(true);
+      } else if (!response.ok) {
+        throw new Error("API error");
+      } else {
+        const data = await response.json();
+        if (data.reading) {
+          setShowFate(false);
+          setFateMessage(data.reading);
+          setTimeout(() => setShowFate(true), 10);
+          return;
+        }
       }
     } catch {
       // fall through to static fallback
@@ -292,10 +298,10 @@ function ReadingPageInner() {
         `}</style>
         <div className="text-center">
           <div className="pulse-border border-4 border-[#E3B84B] rounded-lg p-8 w-96 h-96 flex items-center justify-center mb-8">
-            <img src="/assets/moira-cheerful.png" alt="Sireal the fortune teller" style={{width: "280px", height: "auto"}} />
+            <img src="/assets/moira-cheerful.png" alt="Moira the fortune teller" style={{width: "280px", height: "auto"}} />
           </div>
           <h2 className="font-serif text-3xl font-bold" style={{ color: "#E3B84B" }}>
-            Sireal is consulting the stars...
+            Moira is consulting the stars...
           </h2>
           <p className="text-[#D4C5F9] mt-4">Your reading awaits, dear {signLabel}</p>
         </div>
@@ -342,7 +348,7 @@ function ReadingPageInner() {
           <div className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="border-4 border-[#E3B84B] rounded-lg p-6 h-96 flex items-center justify-center">
-                <img src="/assets/moira-cheerful.png" alt="Sireal the fortune teller" style={{width: "280px", height: "auto"}} />
+                <img src="/assets/moira-cheerful.png" alt="Moira the fortune teller" style={{width: "280px", height: "auto"}} />
               </div>
 
               <div className="bg-[#1A1A2E] border-2 border-[#E3B84B] rounded-lg p-8">
@@ -355,7 +361,7 @@ function ReadingPageInner() {
                     <div className="reading-shimmer h-4 w-5/6" />
                     <div className="reading-shimmer h-4 w-4/5" />
                     <div className="reading-shimmer h-4 w-full" />
-                    <p className="text-[#D4C5F9]/60 text-sm mt-4">Sireal is channeling the stars...</p>
+                    <p className="text-[#D4C5F9]/60 text-sm mt-4">Moira is channeling the stars...</p>
                   </div>
                 ) : (
                   <p className="text-[#D4C5F9] leading-relaxed text-lg mb-8">{displayBrightSide}</p>
@@ -398,7 +404,7 @@ function ReadingPageInner() {
 
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="flicker border-4 rounded-lg p-6 h-96 flex items-center justify-center" style={{ borderColor: "#2EE59D" }}>
-                <img src="/assets/witch-moira.png" alt="Witch Sireal" style={{width: "280px", height: "auto"}} />
+                <img src="/assets/witch-moira.png" alt="Witch Moira" style={{width: "280px", height: "auto"}} />
               </div>
 
               <div className="bg-[#1A1A2E] rounded-lg p-8" style={{ borderColor: "#2EE59D", borderWidth: "2px" }}>
@@ -411,7 +417,7 @@ function ReadingPageInner() {
                     <div className="reading-shimmer h-4 w-5/6" />
                     <div className="reading-shimmer h-4 w-4/5" />
                     <div className="reading-shimmer h-4 w-full" />
-                    <p className="text-[#D4C5F9]/60 text-sm mt-4">Witch Sireal is peering into the mirror...</p>
+                    <p className="text-[#D4C5F9]/60 text-sm mt-4">Witch Moira is peering into the mirror...</p>
                   </div>
                 ) : (
                   <p className="text-[#D4C5F9] leading-relaxed text-lg mb-8">{displayHorrorMirror}</p>
@@ -605,6 +611,19 @@ function ReadingPageInner() {
                 }`}
               >
                 <p className="text-[#D4C5F9] text-lg leading-relaxed">{fateMessage}</p>
+                {needsPass && (
+                  <div className="mt-6 pt-6 border-t border-[#E3B84B]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <p className="text-sm text-[#D4C5F9]/80">
+                      That was a free glimpse. The Veil Season Pass unlocks unlimited fate rewrites through November 15.
+                    </p>
+                    <a
+                      href={process.env.NEXT_PUBLIC_PAYMENT_LINK || "/pass"}
+                      className="shrink-0 px-6 py-2 bg-[#E3B84B] text-[#0B0B14] rounded-lg hover:opacity-90 transition font-semibold whitespace-nowrap"
+                    >
+                      Get the Pass — $9.99
+                    </a>
+                  </div>
+                )}
               </div>
             )}
           </div>

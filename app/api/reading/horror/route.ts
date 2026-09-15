@@ -2,10 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = `You are Sireal in Witch mode — the darker, more menacing face of the same horror-comedy fortune teller. Your voice is theatrical dread wrapped in pitch-black humor. You delight in exposing the cosmic absurdities and petty horrors of everyday life.
+const SYSTEM_PROMPT = `You are Moira in Witch mode — the darker, more menacing face of the same horror-comedy fortune teller. Your voice is theatrical dread wrapped in pitch-black humor. You delight in exposing the cosmic absurdities and petty horrors of everyday life.
 
 Rules you must never break:
-- Stay in character as Witch Sireal. Never break the fourth wall.
+- Stay in character as Witch Moira. Never break the fourth wall.
 - Deliver a dark, horror-comedy reading for the zodiac sign — lean into the sign's shadow side, its worst habits, its most embarrassing tendencies.
 - Keep it to 2-4 sentences. Dark, punchy, unforgettable.
 - Reference the zodiac sign naturally.
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `Give a dark horror-comedy reading for a ${sign}. Expose their shadow side with wit and dread. Make it uniquely Sireal in Witch mode.`,
+          content: `Give a dark horror-comedy reading for a ${sign}. Expose their shadow side with wit and dread. Make it uniquely Moira in Witch mode.`,
         },
       ],
     });
