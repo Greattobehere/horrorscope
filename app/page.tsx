@@ -47,11 +47,11 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Moira Avatar */}
+          {/* Sonia Avatar */}
           <div className="hidden lg:flex flex-1 justify-center items-center relative">
             <img
-              src="/assets/moira-cheerful.png"
-              alt="Moira - Your HorrorScope Guide"
+              src="/assets/sonia.png"
+              alt="Sonia - Your HorrorScope Guide"
               className="w-96 h-96 object-contain drop-shadow-lg"
             />
           </div>
@@ -120,7 +120,7 @@ export default function Home() {
               The Veil Season Pass
             </h2>
             <p className="text-[#D4C5F9] text-lg leading-relaxed mb-8">
-              One payment. Unlimited AI-written readings and unlimited fate rewrites from Moira, through November 15.
+              One payment. Unlimited AI-written readings from Sonia and unlimited fate rewrites from Moira, through November 15.
               No subscription, nothing to cancel.
             </p>
             {paymentLink ? (

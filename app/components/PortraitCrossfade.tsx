@@ -14,17 +14,15 @@ interface PortraitCrossfadeProps {
   className?: string;
 }
 
-// Portrait source constants
-const WITCH_SRC = "/assets/witch-moira.png";
-const HAUNTED_SRC = "/assets/moira-cheerful.png"; // Temporary fallback
-const FRIENDLY_SRC = "/assets/moira-cheerful.png";
+// Portrait source constants — Moira (evil twin) and Sonia (good twin)
+const MOIRA_SRC = "/assets/moira.png";
+const SONIA_SRC = "/assets/sonia.png";
 
 /**
  * Compute omen score: weighted average of "positive" slider directions
  * Score range: 0–100
- * ≤ 33: Witch form
- * 34–66: Haunted form
- * ≥ 67: Friendly form
+ * < 50: Moira (the fate is going badly)
+ * ≥ 50: Sonia (the fate is going well)
  */
 function computeOmenScore(sliders: {
   love: number;
@@ -52,55 +50,33 @@ export default function PortraitCrossfade({
   className = "w-full h-full object-cover object-top",
 }: PortraitCrossfadeProps) {
   const omenScore = computeOmenScore(sliders);
-
-  // Determine which portrait to show
-  let portraitSrc: string;
-  if (omenScore <= 33) {
-    portraitSrc = WITCH_SRC;
-  } else if (omenScore >= 67) {
-    portraitSrc = FRIENDLY_SRC;
-  } else {
-    portraitSrc = HAUNTED_SRC;
-  }
+  const showsSonia = omenScore >= 50;
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* Witch form — omen ≤ 33 */}
+      {/* Moira — the fate is going badly */}
       <img
-        src={WITCH_SRC}
-        alt="Witch Moira"
+        src={MOIRA_SRC}
+        alt="Moira"
         className={`${className} transition-opacity duration-[1500ms] absolute inset-0`}
         draggable={false}
         aria-hidden="true"
         style={{
-          opacity: omenScore <= 33 ? 1 : 0,
-          pointerEvents: omenScore <= 33 ? "auto" : "none",
+          opacity: showsSonia ? 0 : 1,
+          pointerEvents: showsSonia ? "none" : "auto",
         }}
       />
 
-      {/* Mid form (haunted) — 33 < omen < 67 */}
+      {/* Sonia — the fate is going well */}
       <img
-        src={HAUNTED_SRC}
-        alt="Haunted Moira"
+        src={SONIA_SRC}
+        alt="Sonia"
         className={`${className} transition-opacity duration-[1500ms] absolute inset-0`}
         draggable={false}
         aria-hidden="true"
         style={{
-          opacity: omenScore > 33 && omenScore < 67 ? 1 : 0,
-          pointerEvents: omenScore > 33 && omenScore < 67 ? "auto" : "none",
-        }}
-      />
-
-      {/* Friendly form — omen ≥ 67 */}
-      <img
-        src={FRIENDLY_SRC}
-        alt="Cheerful Moira"
-        className={`${className} transition-opacity duration-[1500ms] absolute inset-0`}
-        draggable={false}
-        aria-hidden="true"
-        style={{
-          opacity: omenScore >= 67 ? 1 : 0,
-          pointerEvents: omenScore >= 67 ? "auto" : "none",
+          opacity: showsSonia ? 1 : 0,
+          pointerEvents: showsSonia ? "auto" : "none",
         }}
       />
 

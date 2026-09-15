@@ -299,10 +299,10 @@ function ReadingPageInner() {
         `}</style>
         <div className="text-center">
           <div className="pulse-border border-4 border-[#E3B84B] rounded-lg p-8 w-96 h-96 flex items-center justify-center mb-8">
-            <img src="/assets/moira-cheerful.png" alt="Moira the fortune teller" style={{width: "280px", height: "auto"}} />
+            <img src="/assets/sonia.png" alt="Sonia the fortune teller" style={{width: "280px", height: "auto"}} />
           </div>
           <h2 className="font-serif text-3xl font-bold" style={{ color: "#E3B84B" }}>
-            Moira is consulting the stars...
+            Sonia is consulting the stars...
           </h2>
           <p className="text-[#D4C5F9] mt-4">Your reading awaits, dear {signLabel}</p>
         </div>
@@ -349,7 +349,7 @@ function ReadingPageInner() {
           <div className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="border-4 border-[#E3B84B] rounded-lg p-6 h-96 flex items-center justify-center">
-                <img src="/assets/moira-cheerful.png" alt="Moira the fortune teller" style={{width: "280px", height: "auto"}} />
+                <img src="/assets/sonia.png" alt="Sonia the fortune teller" style={{width: "280px", height: "auto"}} />
               </div>
 
               <div className="bg-[#1A1A2E] border-2 border-[#E3B84B] rounded-lg p-8">
@@ -362,7 +362,7 @@ function ReadingPageInner() {
                     <div className="reading-shimmer h-4 w-5/6" />
                     <div className="reading-shimmer h-4 w-4/5" />
                     <div className="reading-shimmer h-4 w-full" />
-                    <p className="text-[#D4C5F9]/60 text-sm mt-4">Moira is channeling the stars...</p>
+                    <p className="text-[#D4C5F9]/60 text-sm mt-4">Sonia is channeling the stars...</p>
                   </div>
                 ) : (
                   <p className="text-[#D4C5F9] leading-relaxed text-lg mb-8">{displayBrightSide}</p>
@@ -405,7 +405,7 @@ function ReadingPageInner() {
 
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="flicker border-4 rounded-lg p-6 h-96 flex items-center justify-center" style={{ borderColor: "#2EE59D" }}>
-                <img src="/assets/witch-moira.png" alt="Witch Moira" style={{width: "280px", height: "auto"}} />
+                <img src="/assets/moira.png" alt="Moira" style={{width: "280px", height: "auto"}} />
               </div>
 
               <div className="bg-[#1A1A2E] rounded-lg p-8" style={{ borderColor: "#2EE59D", borderWidth: "2px" }}>
@@ -418,7 +418,7 @@ function ReadingPageInner() {
                     <div className="reading-shimmer h-4 w-5/6" />
                     <div className="reading-shimmer h-4 w-4/5" />
                     <div className="reading-shimmer h-4 w-full" />
-                    <p className="text-[#D4C5F9]/60 text-sm mt-4">Witch Moira is peering into the mirror...</p>
+                    <p className="text-[#D4C5F9]/60 text-sm mt-4">Moira is peering into the mirror...</p>
                   </div>
                 ) : (
                   <p className="text-[#D4C5F9] leading-relaxed text-lg mb-8">{displayHorrorMirror}</p>

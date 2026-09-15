@@ -52,8 +52,8 @@ export default function TermsOfService() {
               No warranty
             </h2>
             <p>
-              HorrorScope is provided "as is," for amusement, with no guarantee that Moira's prophecies will come
-              true — or, for that matter, that they won't.
+              HorrorScope is provided "as is," for amusement, with no guarantee that Sonia's or Moira's prophecies
+              will come true — or, for that matter, that they won't.
             </p>
           </section>
 
