@@ -7,6 +7,7 @@ import PortraitCrossfade from "../components/PortraitCrossfade";
 import ShareCard from "../components/ShareCard";
 import { Suspense } from "react"
 import { READINGS, getReadingIndex } from "../data/readings";
+import { getRealPaymentLink } from "@/lib/payment-link";
 
 function ReadingPageInner() {
   const [isLoading, setIsLoading] = useState(true);
@@ -617,7 +618,7 @@ function ReadingPageInner() {
                       That was a free glimpse. The Veil Season Pass unlocks unlimited fate rewrites through November 15.
                     </p>
                     <a
-                      href={process.env.NEXT_PUBLIC_PAYMENT_LINK || "/pass"}
+                      href={getRealPaymentLink() || "/pass"}
                       className="shrink-0 px-6 py-2 bg-[#E3B84B] text-[#0B0B14] rounded-lg hover:opacity-90 transition font-semibold whitespace-nowrap"
                     >
                       Get the Pass — $9.99

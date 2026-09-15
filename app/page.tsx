@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { getRealPaymentLink } from "@/lib/payment-link";
 
 export default function Home() {
+  const paymentLink = getRealPaymentLink();
+
   return (
     <div className="min-h-screen bg-[#0B0B14] text-[#F2EEF7] overflow-hidden relative">
       {/* Star background animation */}
@@ -120,19 +123,31 @@ export default function Home() {
               One payment. Unlimited AI-written readings and unlimited fate rewrites from Moira, through November 15.
               No subscription, nothing to cancel.
             </p>
-            <a
-              href={process.env.NEXT_PUBLIC_PAYMENT_LINK || "/pass"}
-              className="inline-block px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"
-              style={{ backgroundColor: "#E3B84B", color: "#0B0B14" }}
-            >
-              Get the Pass — $9.99
-            </a>
-            <p className="text-[#D4C5F9]/60 text-sm mt-4">
-              Already have a pass?{" "}
-              <a href="/pass" className="underline hover:text-[#E3B84B] transition">
-                Resend my unlock link
+            {paymentLink ? (
+              <a
+                href={paymentLink}
+                className="inline-block px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                style={{ backgroundColor: "#E3B84B", color: "#0B0B14" }}
+              >
+                Get the Pass — $9.99
               </a>
-            </p>
+            ) : (
+              <span
+                className="inline-block px-8 py-4 text-lg font-semibold rounded-lg opacity-50 cursor-not-allowed"
+                style={{ backgroundColor: "#E3B84B", color: "#0B0B14" }}
+                title="Coming soon"
+              >
+                Coming Soon
+              </span>
+            )}
+            {paymentLink && (
+              <p className="text-[#D4C5F9]/60 text-sm mt-4">
+                Already have a pass?{" "}
+                <a href="/pass" className="underline hover:text-[#E3B84B] transition">
+                  Resend my unlock link
+                </a>
+              </p>
+            )}
           </div>
         </section>
 
