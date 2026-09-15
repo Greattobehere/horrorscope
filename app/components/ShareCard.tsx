@@ -11,7 +11,7 @@ interface ShareCardProps {
 export default function ShareCard({ signLabel, omenScore, quote }: ShareCardProps) {
   const isCheerful = omenScore >= 50;
   const portraitSrc = isCheerful ? "/assets/moira-cheerful.png" : "/assets/witch-moira.png";
-  const formLabel = isCheerful ? "Cheerful Sireal" : "Witch Sireal";
+  const formLabel = isCheerful ? "Cheerful Moira" : "Witch Moira";
 
   return (
     <div
