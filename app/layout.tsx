@@ -15,6 +15,20 @@ const cinzel = Cinzel({
 export const metadata: Metadata = {
   title: "HorrorScope - Your stars are screaming",
   description: "Horror-comedy horoscopes personalized to your birth date. Fictional entertainment for entertainment purposes only.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "HorrorScope",
+  },
+};
+
+export const viewport = {
+  themeColor: "#0B0B14",
 };
 
 export default function RootLayout({
