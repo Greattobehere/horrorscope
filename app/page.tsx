@@ -3,6 +3,12 @@
 import Link from "next/link";
 import { getRealPaymentLink } from "@/lib/payment-link";
 
+const SOCIAL_LINKS = [
+  { label: "TikTok", url: process.env.NEXT_PUBLIC_TIKTOK_URL },
+  { label: "Instagram", url: process.env.NEXT_PUBLIC_INSTAGRAM_URL },
+  { label: "YouTube", url: process.env.NEXT_PUBLIC_YOUTUBE_URL },
+].filter((link): link is { label: string; url: string } => Boolean(link.url));
+
 export default function Home() {
   const paymentLink = getRealPaymentLink();
 
@@ -157,6 +163,21 @@ export default function Home() {
             <p className="text-center text-[#D4C5F9] text-sm">
               HorrorScope is fictional entertainment for entertainment purposes only. Not real astrology or advice. For maximum entertainment, please suspend disbelief.
             </p>
+            {SOCIAL_LINKS.length > 0 && (
+              <div className="flex justify-center gap-8 mt-6 text-sm">
+                {SOCIAL_LINKS.map((link) => (
+                  <a
+                    key={link.label}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#D4C5F9] hover:text-[#E3B84B] transition"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            )}
             <div className="flex justify-center gap-8 mt-6 text-sm">
               <a href="/privacy" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Privacy</a>
               <a href="/terms" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Terms</a>
