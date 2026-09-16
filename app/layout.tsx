@@ -12,9 +12,15 @@ const cinzel = Cinzel({
   subsets: ["latin"],
 });
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://horrorscope.art";
+const TITLE = "HorrorScope - Your stars are screaming";
+const DESCRIPTION =
+  "Horror-comedy horoscopes personalized to your birth date. Fictional entertainment for entertainment purposes only.";
+
 export const metadata: Metadata = {
-  title: "HorrorScope - Your stars are screaming",
-  description: "Horror-comedy horoscopes personalized to your birth date. Fictional entertainment for entertainment purposes only.",
+  metadataBase: new URL(BASE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
@@ -24,6 +30,20 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "HorrorScope",
+  },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: BASE_URL,
+    siteName: "HorrorScope",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ["/og-image.png"],
   },
 };
 

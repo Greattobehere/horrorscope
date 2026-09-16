@@ -28,14 +28,6 @@ export default function OnboardingPage() {
   const [zodiacSign, setZodiacSign] = useState("");
   const [email, setEmail] = useState("");
   const [marketingConsent, setMarketingConsent] = useState(false);
-  const [tier, setTier] = useState("");
-  const [formData, setFormData] = useState({
-    birthDate: "",
-    zodiacSign: "",
-    email: "",
-    marketingConsent: false,
-    tier: "",
-  });
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const date = e.target.value;
@@ -53,16 +45,8 @@ export default function OnboardingPage() {
       alert("Please enter your birth date");
       return;
     }
-    if (step === 2 && !email) {
-      alert("Please enter your email");
-      return;
-    }
-    if (step === 3 && !tier) {
-      alert("Please select a tier");
-      return;
-    }
 
-    if (step < 3) {
+    if (step < 2) {
       setStep(step + 1);
     }
   };
@@ -74,14 +58,6 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = () => {
-    setFormData({
-      birthDate,
-      zodiacSign,
-      email,
-      marketingConsent,
-      tier,
-    });
-
     // persist sign and email locally
     const normalizedSign = zodiacSign.toLowerCase();
     if (normalizedSign) {
@@ -93,7 +69,7 @@ export default function OnboardingPage() {
       fetch("/api/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, marketingConsent }),
       }).catch(() => {});
     }
 
@@ -111,7 +87,7 @@ export default function OnboardingPage() {
             </h1>
           </Link>
           <div className="flex gap-2">
-            {[1, 2, 3].map((num) => (
+            {[1, 2].map((num) => (
               <div
                 key={num}
                 className={`w-3 h-3 rounded-full transition-all ${
@@ -169,7 +145,8 @@ export default function OnboardingPage() {
                   So We Can Haunt You
                 </h2>
                 <p className="text-[#D4C5F9] text-lg">
-                  Share your email so we can send you your horror-comedy horoscope updates.
+                  Share your email so we can send you your horror-comedy horoscope updates. Optional —
+                  you can skip straight to your reading.
                 </p>
               </div>
 
@@ -208,79 +185,6 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 3: Choose Tier */}
-          {step === 3 && (
-            <div className="space-y-8">
-              <div>
-                <h2 className="font-serif text-4xl font-bold mb-2" style={{ color: "#E3B84B" }}>
-                  Choose Your Fate
-                </h2>
-                <p className="text-[#D4C5F9] text-lg">
-                  Select how deep into the cosmic horror you want to go.
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Free Tier */}
-                <div
-                  onClick={() => setTier("free")}
-                  className={`p-6 rounded-lg border-2 cursor-pointer transition-all ${
-                    tier === "free"
-                      ? "border-[#E3B84B] bg-[#0B0B14]"
-                      : "border-[#E3B84B]/30 bg-[#0B0B14]/50 hover:border-[#E3B84B]/50"
-                  }`}
-                >
-                  <h3 className="font-serif text-2xl font-bold mb-3" style={{ color: "#E3B84B" }}>
-                    Free Tier
-                  </h3>
-                  <p className="text-[#D4C5F9] text-sm mb-4">
-                    Basic horror-scope readings with mild cosmic dread
-                  </p>
-                  <ul className="space-y-2 text-[#D4C5F9] text-sm">
-                    <li>✓ One reading per month</li>
-                    <li>✓ Basic predictions</li>
-                    <li>✓ Email updates</li>
-                  </ul>
-                  <p className="font-serif text-3xl font-bold mt-6">
-                    <span style={{ color: "#E3B84B" }}>Free</span>
-                  </p>
-                </div>
-
-                {/* Paid Tier */}
-                <div
-                  onClick={() => setTier("paid")}
-                  className={`p-6 rounded-lg border-2 cursor-pointer transition-all ${
-                    tier === "paid"
-                      ? "border-[#E3B84B] bg-[#0B0B14]"
-                      : "border-[#E3B84B]/30 bg-[#0B0B14]/50 hover:border-[#E3B84B]/50"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-serif text-2xl font-bold" style={{ color: "#E3B84B" }}>
-                      Paid Tier
-                    </h3>
-                    <span className="bg-[#E3B84B] text-[#0B0B14] text-xs font-bold px-3 py-1 rounded">
-                      RECOMMENDED
-                    </span>
-                  </div>
-                  <p className="text-[#D4C5F9] text-sm mb-4">
-                    Unlimited deep cosmic horror and personalized terror
-                  </p>
-                  <ul className="space-y-2 text-[#D4C5F9] text-sm">
-                    <li>✓ Unlimited readings</li>
-                    <li>✓ Advanced predictions</li>
-                    <li>✓ Daily updates</li>
-                    <li>✓ Exclusive content</li>
-                  </ul>
-                  <p className="font-serif text-3xl font-bold mt-6">
-                    <span style={{ color: "#E3B84B" }}>$4.99</span>
-                    <span className="text-sm text-[#D4C5F9] font-normal">/month</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Navigation Buttons */}
           <div className="flex justify-between items-center mt-12 pt-8 border-t border-[#E3B84B]/20">
             <button
@@ -295,7 +199,7 @@ export default function OnboardingPage() {
               ← Back
             </button>
 
-            {step < 3 ? (
+            {step < 2 ? (
               <button
                 onClick={handleNextStep}
                 className="px-8 py-3 rounded-lg font-semibold transition"
@@ -319,14 +223,14 @@ export default function OnboardingPage() {
                 onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
                 onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
               >
-                Complete ✓
+                See My Reading ✓
               </button>
             )}
           </div>
 
           {/* Step Indicator */}
           <div className="text-center mt-8 text-[#D4C5F9] text-sm">
-            Step {step} of 3
+            Step {step} of 2
           </div>
         </div>
 
