@@ -34,7 +34,7 @@ export default function OnboardingPage() {
     setBirthDate(date);
 
     if (date) {
-      const [year, month, day] = date.split("-");
+      const [, month, day] = date.split("-");
       const zodiac = getZodiacSign(parseInt(month), parseInt(day));
       setZodiacSign(zodiac);
     }

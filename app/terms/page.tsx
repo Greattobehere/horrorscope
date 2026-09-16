@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-[#0B0B14] text-[#F2EEF7] px-6 md:px-16 py-16">
@@ -26,13 +28,13 @@ export default function TermsOfService() {
             <p>
               The Veil Season Pass is a one-time purchase of $9.99 granting unlimited AI-generated readings and fate
               rewrites through November 15, 2026. It is not a subscription — it does not renew and there is nothing
-              to cancel. Access ends automatically when the pass expires. Because it's a limited-run digital product
-              consumed immediately upon purchase, purchases are final; if something went wrong with your order,
-              email{" "}
+              to cancel. Access ends automatically when the pass expires. Because it&apos;s a limited-run digital
+              product consumed immediately upon purchase, purchases are final; if something went wrong with your
+              order, email{" "}
               <a href="mailto:hello@horrorscope.art" className="underline hover:text-[#E3B84B]">
                 hello@horrorscope.art
               </a>{" "}
-              and we'll sort it out.
+              and we&apos;ll sort it out.
             </p>
           </section>
 
@@ -41,9 +43,9 @@ export default function TermsOfService() {
               Acceptable use
             </h2>
             <p>
-              Don't use HorrorScope to harass, threaten, or generate content targeting a real, identifiable person.
-              Readings are about fictional zodiac archetypes, not real individuals. We may block access for abuse of
-              the service.
+              Don&apos;t use HorrorScope to harass, threaten, or generate content targeting a real, identifiable
+              person. Readings are about fictional zodiac archetypes, not real individuals. We may block access for
+              abuse of the service.
             </p>
           </section>
 
@@ -52,8 +54,8 @@ export default function TermsOfService() {
               No warranty
             </h2>
             <p>
-              HorrorScope is provided "as is," for amusement, with no guarantee that Sonia's or Moira's prophecies
-              will come true — or, for that matter, that they won't.
+              HorrorScope is provided &quot;as is,&quot; for amusement, with no guarantee that Sonia&apos;s or
+              Moira&apos;s prophecies will come true — or, for that matter, that they won&apos;t.
             </p>
           </section>
 
@@ -71,9 +73,9 @@ export default function TermsOfService() {
           </section>
         </div>
 
-        <a href="/" className="inline-block mt-12 text-[#D4C5F9] hover:text-[#E3B84B] transition font-semibold">
+        <Link href="/" className="inline-block mt-12 text-[#D4C5F9] hover:text-[#E3B84B] transition font-semibold">
           ← Back to Home
-        </a>
+        </Link>
       </div>
     </div>
   );

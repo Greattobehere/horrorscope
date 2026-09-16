@@ -75,7 +75,7 @@ export default function Home() {
                 Enter Your Birthday
               </h3>
               <p className="text-[#D4C5F9] leading-relaxed">
-                Share your birth date and we'll calculate your zodiac sign and generate your personalized horror-comedy reading.
+                Share your birth date and we&apos;ll calculate your zodiac sign and generate your personalized horror-comedy reading.
               </p>
             </div>
 

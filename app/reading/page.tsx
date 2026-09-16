@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toPng } from "html-to-image";
 import PortraitCrossfade from "../components/PortraitCrossfade";
@@ -226,7 +227,7 @@ function ReadingPageInner() {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       alert("Failed to copy to clipboard");
     }
   };
@@ -644,12 +645,12 @@ function ReadingPageInner() {
             ← Back
           </button>
 
-          <a
+          <Link
             href="/"
             className="text-[#D4C5F9] hover:text-[#E3B84B] transition font-semibold"
           >
             ← Return Home
-          </a>
+          </Link>
         </div>
 
         <div
