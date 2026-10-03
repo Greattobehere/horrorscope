@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toPng } from "html-to-image";
 import PortraitCrossfade from "../components/PortraitCrossfade";
+import TalkingWitch from "../components/TalkingWitch";
 import ShareCard from "../components/ShareCard";
 import { Suspense } from "react"
 import { READINGS, getReadingIndex } from "../data/readings";
@@ -300,7 +301,7 @@ function ReadingPageInner() {
         `}</style>
         <div className="text-center">
           <div className="pulse-border border-4 border-[#E3B84B] rounded-lg p-8 w-96 h-96 flex items-center justify-center mb-8">
-            <img src="/assets/sonia.png" alt="Sonia the fortune teller" style={{width: "280px", height: "auto"}} />
+            <img src="/assets/talking/sonia/base.webp" alt="Sonia the fortune teller" style={{width: "280px", height: "auto"}} />
           </div>
           <h2 className="font-serif text-3xl font-bold" style={{ color: "#E3B84B" }}>
             Sonia is consulting the stars...
@@ -349,8 +350,8 @@ function ReadingPageInner() {
         {currentPart === 1 && (
           <div className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div className="border-4 border-[#E3B84B] rounded-lg p-6 h-96 flex items-center justify-center">
-                <img src="/assets/sonia.png" alt="Sonia the fortune teller" style={{width: "280px", height: "auto"}} />
+              <div className="border-4 border-[#E3B84B] rounded-lg p-6 flex items-center justify-center">
+                <TalkingWitch who="sonia" text={displayBrightSide} disabled={isLoadingReadings && !aiBrightSide} />
               </div>
 
               <div className="bg-[#1A1A2E] border-2 border-[#E3B84B] rounded-lg p-8">
@@ -405,8 +406,8 @@ function ReadingPageInner() {
             `}</style>
 
             <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div className="flicker border-4 rounded-lg p-6 h-96 flex items-center justify-center" style={{ borderColor: "#2EE59D" }}>
-                <img src="/assets/moira.png" alt="Moira" style={{width: "280px", height: "auto"}} />
+              <div className="flicker border-4 rounded-lg p-6 flex items-center justify-center" style={{ borderColor: "#2EE59D" }}>
+                <TalkingWitch who="moira" text={displayHorrorMirror} disabled={isLoadingReadings && !aiHorrorMirror} />
               </div>
 
               <div className="bg-[#1A1A2E] rounded-lg p-8" style={{ borderColor: "#2EE59D", borderWidth: "2px" }}>

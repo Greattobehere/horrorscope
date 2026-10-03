@@ -15,8 +15,8 @@ interface PortraitCrossfadeProps {
 }
 
 // Portrait source constants — Moira (evil twin) and Sonia (good twin)
-const MOIRA_SRC = "/assets/moira.png";
-const SONIA_SRC = "/assets/sonia.png";
+const MOIRA_SRC = "/assets/talking/moira/base.webp";
+const SONIA_SRC = "/assets/talking/sonia/base.webp";
 
 /**
  * Compute omen score: weighted average of "positive" slider directions

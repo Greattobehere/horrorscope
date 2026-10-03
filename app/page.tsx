@@ -56,7 +56,7 @@ export default function Home() {
           {/* Sonia Avatar */}
           <div className="hidden lg:flex flex-1 justify-center items-center relative">
             <img
-              src="/assets/sonia.png"
+              src="/assets/talking/sonia/base.webp"
               alt="Sonia - Your HorrorScope Guide"
               className="w-96 h-96 object-contain drop-shadow-lg"
             />
