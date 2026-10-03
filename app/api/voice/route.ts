@@ -4,8 +4,8 @@
 // 503 and the client falls back to the browser's built-in speech.
 
 const VOICES = {
-  moira: { voice: "bf_emma", speed: 0.9 },
-  sonia: { voice: "af_heart", speed: 1.0 },
+  moira: { voice: "af_nicole", speed: 0.9 },
+  sonia: { voice: "af_aoede", speed: 1.0 },
 } as const;
 
 const MAX_CHARS = 800; // a reading is 2-4 sentences; this caps cost per request
