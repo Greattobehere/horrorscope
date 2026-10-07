@@ -250,13 +250,17 @@ export default function TalkingWitch({ who, text: reading, disabled = false, gre
       // Scale the mouth to this voice's own loudness: Moira's breathy voice is
       // much quieter than Sonia's and barely opened her mouth on a fixed scale.
       let peak = 0.05;
+      let open = 0;
       const tick = () => {
         analyser.getByteTimeDomainData(samples);
         let sum = 0;
         for (const v of samples) sum += ((v - 128) / 128) ** 2;
         const rms = Math.sqrt(sum / samples.length);
         peak = Math.max(rms, peak * 0.997);
-        setMouth(Math.min(1, Math.max(0, (rms - 0.01) / (peak * 0.6))));
+        const target = rms < 0.015 ? 0 : Math.min(1, Math.max(0, (rms - 0.01) / (peak * 0.6)));
+        // Open quickly on a syllable, close a touch slower: reads as speech, not flicker.
+        open = target > open ? open + (target - open) * 0.6 : open + (target - open) * 0.35;
+        setMouth(open < 0.04 ? 0 : open);
         frameRef.current = requestAnimationFrame(tick);
       };
       audio.onplay = () => tick();

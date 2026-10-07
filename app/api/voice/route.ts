@@ -8,11 +8,14 @@
 // Vercel's cache instead of being generated again.
 
 // Moira matches the Exit 41 videos: the same voice at the pace the episodes use
-// (0.86 base x 0.88 "slow" delivery), with a breath between sentences.
+// (0.86 base x 0.88 "slow" delivery). Each sentence is spoken separately and
+// joined with real silence, so neither witch rushes from one sentence to the next.
 const VOICES = {
-  moira: { voice: "af_nicole", speed: 0.76, pauses: true },
-  sonia: { voice: "af_aoede", speed: 0.95, pauses: false },
+  moira: { voice: "af_nicole", speed: 0.76, pauseSeconds: 0.9 },
+  sonia: { voice: "af_aoede", speed: 0.88, pauseSeconds: 0.6 },
 } as const;
+
+const MAX_SENTENCES = 12;
 
 const MAX_CHARS = 1100; // greeting + a 2-4 sentence reading; this caps cost per request
 
@@ -24,10 +27,96 @@ function endpointFor(voice: string) {
   return voice.startsWith("b") ? "fal-ai/kokoro/british-english" : "fal-ai/kokoro/american-english";
 }
 
-// Kokoro pauses longer at an ellipsis, which gives Moira her slow, hanging delivery.
-// Only real sentence ends (next word capitalised), so "6 a.m. on" is left alone.
-function withPauses(text: string) {
-  return text.replace(/(?<!\.)\.\s+(?=["'“‘]?[A-Z])/g, "... ");
+// Only real sentence ends (next word capitalised), so "6 a.m. on" stays whole.
+function splitSentences(text: string) {
+  return text
+    .split(/(?<=[.!?…]["'”’]?)\s+(?=["'“‘]?[A-Z])/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+interface Pcm {
+  format: Uint8Array; // the 16-byte "fmt " chunk body
+  data: Uint8Array;
+  bytesPerSecond: number;
+  blockAlign: number;
+}
+
+// Pulls the raw samples out of a PCM WAV file.
+function readWav(buf: ArrayBuffer): Pcm | null {
+  const view = new DataView(buf);
+  if (buf.byteLength < 12 || view.getUint32(0, false) !== 0x52494646 /* RIFF */) return null;
+  let format: Uint8Array | null = null;
+  let offset = 12;
+  while (offset + 8 <= buf.byteLength) {
+    const id = String.fromCharCode(...new Uint8Array(buf, offset, 4));
+    const size = view.getUint32(offset + 4, true);
+    if (id === "fmt ") format = new Uint8Array(buf.slice(offset + 8, offset + 8 + size));
+    if (id === "data" && format) {
+      const end = Math.min(buf.byteLength, offset + 8 + size);
+      const fmt = new DataView(format.buffer);
+      if (fmt.getUint16(0, true) !== 1) return null; // only plain PCM
+      return {
+        format,
+        data: new Uint8Array(buf.slice(offset + 8, end)),
+        bytesPerSecond: fmt.getUint32(8, true),
+        blockAlign: fmt.getUint16(12, true),
+      };
+    }
+    offset += 8 + size + (size & 1);
+  }
+  return null;
+}
+
+// Kokoro pads every clip with its own silence; cut it so the gaps we add are exact.
+function trimSilence(p: Pcm): Pcm {
+  const bitsPerSample = new DataView(p.format.buffer).getUint16(14, true);
+  if (bitsPerSample !== 16) return p;
+  const samples = new Int16Array(p.data.buffer, p.data.byteOffset, Math.floor(p.data.length / 2));
+  const channels = p.blockAlign / 2;
+  const loud = (i: number) => Math.abs(samples[i]) > 300;
+  let start = 0;
+  while (start < samples.length && !loud(start)) start++;
+  let end = samples.length - 1;
+  while (end > start && !loud(end)) end--;
+  if (start >= end) return p;
+  const pad = Math.round((p.bytesPerSecond / p.blockAlign) * 0.06) * channels; // keep a breath of tail
+  const from = Math.max(0, start - pad) - (Math.max(0, start - pad) % channels);
+  const to = Math.min(samples.length, end + pad);
+  return { ...p, data: p.data.slice(from * 2, to * 2) };
+}
+
+// Joins the sentences into one WAV with a silent gap after each one.
+function joinWithSilence(parts: Pcm[], pauseSeconds: number): Uint8Array | null {
+  const first = parts[0];
+  const key = (p: Pcm) => Array.from(p.format.slice(0, 16)).join(",");
+  if (parts.some((p) => key(p) !== key(first))) return null;
+  const gap = Math.round((first.bytesPerSecond * pauseSeconds) / first.blockAlign) * first.blockAlign;
+  const dataLength = parts.reduce((n, p) => n + p.data.length, 0) + gap * (parts.length - 1);
+  const out = new Uint8Array(44 + dataLength);
+  const view = new DataView(out.buffer);
+  const ascii = (at: number, text: string) => [...text].forEach((c, i) => (out[at + i] = c.charCodeAt(0)));
+  ascii(0, "RIFF");
+  view.setUint32(4, 36 + dataLength, true);
+  ascii(8, "WAVE");
+  ascii(12, "fmt ");
+  view.setUint32(16, 16, true);
+  out.set(first.format.slice(0, 16), 20);
+  ascii(36, "data");
+  view.setUint32(40, dataLength, true);
+  let at = 44;
+  parts.forEach((p, i) => {
+    out.set(p.data, at);
+    at += p.data.length + (i < parts.length - 1 ? gap : 0); // the gap is already zeros
+  });
+  return out;
+}
+
+async function speak(endpoint: string, key: string, voice: string, speed: number, text: string) {
+  const url = await generate(endpoint, key, JSON.stringify({ prompt: text, voice, speed }));
+  if (!url) return null;
+  const res = await fetch(url);
+  return res.ok ? res.arrayBuffer() : null;
 }
 
 // fal usually answers in 1-2s, but a request now and then stalls in its queue.
@@ -89,19 +178,25 @@ export async function GET(request: Request) {
       return Response.json({ error: "Text too long" }, { status: 413 });
     }
 
-    const body = JSON.stringify({
-      prompt: config.pauses ? withPauses(text) : text,
-      voice: config.voice,
-      speed: config.speed,
-    });
-    const audioUrl = await generate(endpointFor(config.voice), key, body);
-    if (!audioUrl) {
+    const endpoint = endpointFor(config.voice);
+    const say = (t: string) => speak(endpoint, key, config.voice, config.speed, t);
+
+    // Every sentence at once (no slower than one request), then stitched together
+    // with pauses. If anything about that goes wrong, speak the text in one go.
+    let audio: ArrayBuffer | Uint8Array | null = null;
+    const sentences = splitSentences(text);
+    if (sentences.length > 1 && sentences.length <= MAX_SENTENCES) {
+      const clips = await Promise.all(sentences.map(say));
+      const pcm = clips.map((c) => (c ? readWav(c) : null));
+      if (pcm.every((p): p is Pcm => p !== null)) audio = joinWithSilence(pcm.map(trimSilence), config.pauseSeconds);
+    }
+    audio ??= await say(text);
+    if (!audio) {
       return Response.json({ error: "Voice generation failed" }, { status: 502 });
     }
-    const file = await fetch(audioUrl);
-    return new Response(file.body, {
+    return new Response(audio as BodyInit, {
       headers: {
-        "Content-Type": file.headers.get("content-type") ?? "audio/wav",
+        "Content-Type": "audio/wav",
         // Same witch + same words = same audio, so let Vercel's edge keep it.
         "Cache-Control": "public, max-age=86400, s-maxage=604800",
       },
