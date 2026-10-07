@@ -33,6 +33,57 @@ const DELIVERY: Record<Witch, { pitch: number; rate: number }> = {
   sonia: { pitch: 1.1, rate: 0.96 },
 };
 
+// How each voice is coloured in the browser. Moira copies the episodes: a softer,
+// slightly muffled voice with a little room echo and faint wind underneath.
+const SOUND: Record<Witch, { lowpass: number; gain: number; reverb: number; wind: number }> = {
+  moira: { lowpass: 5200, gain: 0.85, reverb: 0.22, wind: 0.035 },
+  sonia: { lowpass: 12000, gain: 1, reverb: 0.06, wind: 0 },
+};
+
+// Longest we wait for the voice service before using the browser's own voice.
+const VOICE_TIMEOUT_MS = 35000;
+
+async function fetchVoice(who: Witch, text: string): Promise<Blob> {
+  const res = await fetch(`/api/voice?${new URLSearchParams({ who, text })}`);
+  if (!res.ok) throw new Error(`voice ${res.status}`);
+  return res.blob();
+}
+
+// A short decaying burst of noise: a cheap, natural-sounding reverb tail.
+function impulse(ctx: AudioContext, seconds = 1.8) {
+  const length = Math.floor(ctx.sampleRate * seconds);
+  const buffer = ctx.createBuffer(2, length, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buffer.getChannelData(ch);
+    for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** 3;
+  }
+  return buffer;
+}
+
+// Low, slowly swelling wind, like the room tone under the episodes.
+function startWind(ctx: AudioContext, level: number) {
+  const buffer = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  noise.loop = true;
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.value = 450;
+  const gain = ctx.createGain();
+  gain.gain.value = 0;
+  gain.gain.linearRampToValueAtTime(level, ctx.currentTime + 1.2);
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = 0.12;
+  const depth = ctx.createGain();
+  depth.gain.value = level * 0.6;
+  lfo.connect(depth).connect(gain.gain);
+  noise.connect(filter).connect(gain).connect(ctx.destination);
+  noise.start();
+  lfo.start();
+}
+
 const noopSubscribe = () => () => {};
 
 // Fallback only: the browser's own voices, preferring women's voices.
@@ -70,6 +121,28 @@ export default function TalkingWitch({ who, text, disabled = false }: TalkingWit
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const frameRef = useRef<number | null>(null);
+  const ctxRef = useRef<AudioContext | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const [loading, setLoading] = useState(false);
+  const prefetchRef = useRef<{ text: string; voice: Promise<Blob> } | null>(null);
+
+  // Start making the voice as soon as the reading is final, so pressing the
+  // button plays right away even when the voice service is slow.
+  useEffect(() => {
+    if (!text || disabled || prefetchRef.current?.text === text) return;
+    const voice = fetchVoice(who, text);
+    voice.catch(() => {}); // a failure is handled when the visitor presses play
+    prefetchRef.current = { text, voice };
+  }, [who, text, disabled]);
+
+  const closeAudio = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    audioRef.current?.pause();
+    audioRef.current = null;
+    ctxRef.current?.close();
+    ctxRef.current = null;
+  }, []);
 
   const stopMouth = useCallback(() => {
     if (mouthTimer.current) clearInterval(mouthTimer.current);
@@ -81,19 +154,19 @@ export default function TalkingWitch({ who, text, disabled = false }: TalkingWit
 
   const stop = useCallback(() => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    audioRef.current?.pause();
-    audioRef.current = null;
+    closeAudio();
     stopMouth();
+    setLoading(false);
     setSpeaking(false);
-  }, [stopMouth]);
+  }, [stopMouth, closeAudio]);
 
   // Stop talking if the text changes or the component goes away.
   useEffect(() => () => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
-    audioRef.current?.pause();
+    closeAudio();
     if (mouthTimer.current) clearInterval(mouthTimer.current);
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
-  }, [text]);
+  }, [text, closeAudio]);
 
   const speakWithBrowser = useCallback(() => {
     window.speechSynthesis.cancel();
@@ -118,30 +191,61 @@ export default function TalkingWitch({ who, text, disabled = false }: TalkingWit
   const speak = useCallback(async () => {
     if (!text) return;
     setSpeaking(true);
+    setLoading(true);
+    // Create the audio context during the click itself; browsers keep one made
+    // later (after the voice download) suspended, which silences the voice.
+    const ctx = new AudioContext();
+    ctxRef.current = ctx;
+    const controller = new AbortController();
+    abortRef.current = controller;
+    const timeout = setTimeout(() => controller.abort(), VOICE_TIMEOUT_MS);
     try {
-      const res = await fetch("/api/voice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ who, text }),
-      });
-      if (!res.ok) throw new Error(`voice ${res.status}`);
-      const url = URL.createObjectURL(await res.blob());
+      const prefetched = prefetchRef.current;
+      const voice = prefetched && prefetched.text === text ? prefetched.voice : fetchVoice(who, text);
+      const stopped = new Promise<never>((_, reject) =>
+        controller.signal.addEventListener("abort", () => reject(new Error("stopped"))),
+      );
+      const blob = await Promise.race([voice, stopped]);
+      const url = URL.createObjectURL(blob);
+      clearTimeout(timeout);
+      if (abortRef.current !== controller) return; // stopped while loading
+      abortRef.current = null;
+      setLoading(false);
       const audio = new Audio(url);
       audioRef.current = audio;
 
-      // Drive the mouth from the loudness of the actual speech.
-      const ctx = new AudioContext();
+      // Voice -> soften -> dry out + room echo. The mouth follows the dry voice.
+      void ctx.resume(); // never await: without a real click it waits forever
+      const sound = SOUND[who];
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
-      ctx.createMediaElementSource(audio).connect(analyser);
-      analyser.connect(ctx.destination);
+      // The analyser must sit in the audio path or Chrome never feeds it samples.
+      const source = ctx.createMediaElementSource(audio);
+      const tone = ctx.createBiquadFilter();
+      tone.type = "lowpass";
+      tone.frequency.value = sound.lowpass;
+      const level = ctx.createGain();
+      level.gain.value = sound.gain;
+      source.connect(analyser).connect(tone).connect(level).connect(ctx.destination);
+      if (sound.reverb > 0) {
+        const room = ctx.createConvolver();
+        room.buffer = impulse(ctx);
+        const wet = ctx.createGain();
+        wet.gain.value = sound.reverb;
+        level.connect(room).connect(wet).connect(ctx.destination);
+      }
+      if (sound.wind > 0) startWind(ctx, sound.wind);
       const samples = new Uint8Array(analyser.fftSize);
+      // Scale the mouth to this voice's own loudness: Moira's breathy voice is
+      // much quieter than Sonia's and barely opened her mouth on a fixed scale.
+      let peak = 0.05;
       const tick = () => {
         analyser.getByteTimeDomainData(samples);
         let sum = 0;
         for (const v of samples) sum += ((v - 128) / 128) ** 2;
         const rms = Math.sqrt(sum / samples.length);
-        setMouth(Math.min(1, Math.max(0, (rms - 0.015) * 9)));
+        peak = Math.max(rms, peak * 0.997);
+        setMouth(Math.min(1, Math.max(0, (rms - 0.01) / (peak * 0.6))));
         frameRef.current = requestAnimationFrame(tick);
       };
       audio.onplay = () => tick();
@@ -149,11 +253,23 @@ export default function TalkingWitch({ who, text, disabled = false }: TalkingWit
         stopMouth();
         setSpeaking(false);
         URL.revokeObjectURL(url);
-        ctx.close();
+        // Let the echo and wind fade out before closing.
+        setTimeout(() => {
+          if (ctxRef.current === ctx) ctxRef.current = null;
+          ctx.close();
+        }, 1500);
       };
       await audio.play();
     } catch {
-      // Voice service not configured or unavailable: use the browser's voice.
+      clearTimeout(timeout);
+      setLoading(false);
+      // Don't reuse a failed or abandoned prefetch on the next press.
+      if (prefetchRef.current?.text === text) prefetchRef.current = null;
+      if (abortRef.current !== controller) return; // the visitor pressed Stop
+      abortRef.current = null;
+      if (ctxRef.current === ctx) ctxRef.current = null;
+      ctx.close();
+      // Voice service not configured, too slow, or unavailable: use the browser's voice.
       setSpeaking(false);
       if (supported) speakWithBrowser();
     }
@@ -191,7 +307,7 @@ export default function TalkingWitch({ who, text, disabled = false }: TalkingWit
           }}
           aria-label={speaking ? `Stop ${layers.name}` : `Hear ${layers.name} read your fortune`}
         >
-          {speaking ? "■ Stop" : `▶ Hear ${layers.name}`}
+          {loading ? `✦ Summoning ${layers.name}…` : speaking ? "■ Stop" : `▶ Hear ${layers.name}`}
         </button>
       )}
     </div>
