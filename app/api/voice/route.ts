@@ -8,11 +8,11 @@
 // Vercel's cache instead of being generated again.
 
 // Moira matches the Exit 41 videos: the same voice at the pace the episodes use
-// (0.86 base x 0.88 "slow" delivery). Each sentence is spoken separately and
+// for her "slow" lines (0.86 base x 0.88). Each sentence is spoken separately and
 // joined with real silence, so neither witch rushes from one sentence to the next.
 const VOICES = {
-  moira: { voice: "af_nicole", speed: 0.76, pauseSeconds: 0.9 },
-  sonia: { voice: "af_aoede", speed: 0.88, pauseSeconds: 0.6 },
+  moira: { voice: "af_nicole", speed: 0.757, pauseSeconds: 1.15 },
+  sonia: { voice: "af_aoede", speed: 0.8, pauseSeconds: 0.85 },
 } as const;
 
 const MAX_SENTENCES = 12;
@@ -184,13 +184,15 @@ export async function GET(request: Request) {
     // Every sentence at once (no slower than one request), then stitched together
     // with pauses. If anything about that goes wrong, speak the text in one go.
     let audio: ArrayBuffer | Uint8Array | null = null;
+    const started = Date.now();
     const sentences = splitSentences(text);
     if (sentences.length > 1 && sentences.length <= MAX_SENTENCES) {
       const clips = await Promise.all(sentences.map(say));
       const pcm = clips.map((c) => (c ? readWav(c) : null));
       if (pcm.every((p): p is Pcm => p !== null)) audio = joinWithSilence(pcm.map(trimSilence), config.pauseSeconds);
     }
-    audio ??= await say(text);
+    // Only retry in one go if there's still time; past that the page uses its own voice.
+    if (!audio && Date.now() - started < 20000) audio = await say(text);
     if (!audio) {
       return Response.json({ error: "Voice generation failed" }, { status: 502 });
     }

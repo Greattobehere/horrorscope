@@ -1,8 +1,36 @@
 import { Resend } from "resend";
 
+// Newsletter signups go to Kit (kit.com), where the owner writes and sends updates.
+// Only visitors who ticked the marketing box are added. Needs KIT_API_KEY (Kit ->
+// Settings -> Developer -> API keys, a v4 key); KIT_TAG_ID optionally tags them.
+async function addToKit(email: string) {
+  const key = process.env.KIT_API_KEY;
+  if (!key) return;
+  const headers = { "X-Kit-Api-Key": key, "Content-Type": "application/json" };
+  const res = await fetch("https://api.kit.com/v4/subscribers", {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ email_address: email, state: "active" }),
+  });
+  if (!res.ok) {
+    console.error("[Kit] subscriber not added:", res.status, await res.text());
+    return;
+  }
+  const tag = process.env.KIT_TAG_ID;
+  if (tag) {
+    const tagged = await fetch(`https://api.kit.com/v4/tags/${encodeURIComponent(tag)}/subscribers`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ email_address: email }),
+    });
+    if (!tagged.ok) console.error("[Kit] tag not added:", tagged.status, await tagged.text());
+  }
+}
+
 // Saves the visitor to Resend's Contacts list (Resend dashboard -> Audience -> Contacts,
-// exportable as CSV) and sends the welcome email. Visitors who didn't tick the
-// marketing box are saved as unsubscribed, so a broadcast can never reach them.
+// exportable as CSV), adds newsletter signups to Kit, and sends the welcome email.
+// Visitors who didn't tick the marketing box are saved as unsubscribed in Resend and
+// are never added to Kit.
 export async function POST(request: Request) {
   try {
     const { email, marketingConsent } = await request.json();
@@ -11,6 +39,12 @@ export async function POST(request: Request) {
       return Response.json({ error: "Missing email" }, { status: 400 });
     }
     const address = email.trim().toLowerCase();
+
+    if (marketingConsent === true) {
+      await addToKit(address).catch((err) =>
+        console.error("[Kit] error:", err),
+      );
+    }
 
     const apiKey = process.env.RESEND_API_KEY;
 

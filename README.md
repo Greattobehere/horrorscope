@@ -30,6 +30,7 @@ dashboard walkthrough for the Veil Season Pass. Summary:
 |---|---|---|
 | `ANTHROPIC_API_KEY` | No | Falls back to static pre-written readings instead of live AI generation |
 | `RESEND_API_KEY` | No | Welcome/unlock emails are logged to console instead of sent, and visitor emails aren't saved to Resend Contacts |
+| `KIT_API_KEY` / `KIT_TAG_ID` | No | Newsletter signups aren't added to Kit (they're still saved in Resend Contacts) |
 | `FAL_KEY` | No | The witches use the browser's built-in voice instead of their own |
 | `NEXT_PUBLIC_SITE_URL` | No | Defaults to `http://localhost:3000`; set to your real domain in production |
 | `PASS_SECRET` | For the pass | Needed before any Veil Season Pass tokens can be signed/verified |

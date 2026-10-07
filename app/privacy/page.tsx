@@ -51,8 +51,9 @@ export default function PrivacyPolicy() {
               Who we share it with
             </h2>
             <p>
-              Anthropic (to generate reading text), Stripe (to process payments), and Resend (to deliver
-              transactional emails like your unlock link or newsletter). We don&apos;t sell data, and we don&apos;t
+              Anthropic (to generate reading text), Stripe (to process payments), Resend (to deliver
+              emails like your unlock link), and Kit (to send the newsletter, only if you ticked the box
+              asking for it). We don&apos;t sell data, and we don&apos;t
               share it with anyone else.
             </p>
           </section>

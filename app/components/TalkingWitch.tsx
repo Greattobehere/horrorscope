@@ -37,10 +37,10 @@ const DELIVERY: Record<Witch, { pitch: number; rate: number }> = {
   sonia: { pitch: 1.1, rate: 0.96 },
 };
 
-// How each voice is coloured in the browser. Moira copies the episodes: a softer,
-// slightly muffled voice with a little room echo and faint wind underneath.
+// How each voice is coloured in the browser. Moira is left clean so she sounds
+// exactly like the Exit 41 videos (no muffling, echo or wind under her).
 const SOUND: Record<Witch, { lowpass: number; gain: number; reverb: number; wind: number }> = {
-  moira: { lowpass: 5200, gain: 0.85, reverb: 0.22, wind: 0.035 },
+  moira: { lowpass: 12000, gain: 1, reverb: 0, wind: 0 },
   sonia: { lowpass: 12000, gain: 1, reverb: 0.06, wind: 0 },
 };
 
