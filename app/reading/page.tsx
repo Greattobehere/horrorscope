@@ -158,6 +158,12 @@ function ReadingPageInner() {
   }, [readingsReady, soniaVoice, moiraVoice]);
   const moiraGreeting = `Well, well. Hello, ${signLabel}. I'm Moira, Sonia's twin, and she was far too kind. Here is what your stars are really saying.`;
 
+  // Each part opens at the top, where the witch is (phones otherwise stay scrolled
+  // down at the button that was just pressed).
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [currentPart]);
+
   useEffect(() => {
     fetch("/api/voice?warm=1").catch(() => {}); // returning visitors may skip onboarding
     const timer = setTimeout(() => setIntroDone(true), 3000);
@@ -322,10 +328,10 @@ function ReadingPageInner() {
           }
         `}</style>
         <div className="text-center">
-          <div className="pulse-border border-4 border-[#E3B84B] rounded-lg p-8 w-96 h-96 flex items-center justify-center mb-8">
-            <img src="/assets/talking/sonia/base.webp" alt="Sonia the fortune teller" style={{width: "280px", height: "auto"}} />
+          <div className="pulse-border border-4 border-[#E3B84B] rounded-lg p-4 sm:p-8 w-full max-w-96 aspect-square mx-auto flex items-center justify-center mb-8">
+            <img src="/assets/talking/sonia/base.webp" alt="Sonia the fortune teller" className="w-full max-w-[280px] h-auto" />
           </div>
-          <h2 className="font-serif text-3xl font-bold" style={{ color: "#E3B84B" }}>
+          <h2 className="font-serif text-2xl sm:text-3xl font-bold" style={{ color: "#E3B84B" }}>
             {introDone ? "Sonia is ready for you" : "Sonia is consulting the stars..."}
           </h2>
           <p className="text-[#D4C5F9] mt-4">Your reading awaits, dear {signLabel}</p>
@@ -370,7 +376,7 @@ function ReadingPageInner() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="font-serif text-5xl font-bold mb-2" style={{ color: "#E3B84B" }}>
+          <h1 className="font-serif text-3xl sm:text-5xl font-bold mb-2" style={{ color: "#E3B84B" }}>
             Your HorrorScope Reading
           </h1>
           <p className="text-[#D4C5F9] text-lg">{signLabel} - Part {currentPart} of 3</p>

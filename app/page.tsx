@@ -33,12 +33,18 @@ export default function Home() {
       {/* Main content */}
       <div className="relative z-10">
         {/* Hero Section */}
-        <section className="min-h-screen flex items-center justify-between px-8 md:px-16 py-20">
+        <section className="min-h-screen flex items-center justify-between px-6 sm:px-8 md:px-16 py-16 sm:py-20">
           <div className="flex-1 max-w-2xl">
-            <h1 className="font-serif text-6xl md:text-7xl font-bold mb-6" style={{ color: "#E3B84B" }}>
+            {/* On phones Sonia sits above the headline; wide screens show her alongside. */}
+            <img
+              src="/assets/talking/sonia/base.webp"
+              alt="Sonia - Your HorrorScope Guide"
+              className="lg:hidden w-40 h-50 object-cover rounded-lg mb-6 drop-shadow-lg"
+            />
+            <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl font-bold mb-6 break-words" style={{ color: "#E3B84B" }}>
               Your stars are screaming.
             </h1>
-            <p className="text-xl md:text-2xl text-[#D4C5F9] mb-8 leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl text-[#D4C5F9] mb-8 leading-relaxed">
               Horror-comedy horoscopes personalized to your birth date. Fictional entertainment for your amusement only.
             </p>
             <Link
@@ -64,8 +70,8 @@ export default function Home() {
         </section>
 
         {/* How It Works Section */}
-        <section className="py-20 px-8 md:px-16 bg-[#111120]">
-          <h2 className="font-serif text-5xl font-bold text-center mb-16" style={{ color: "#E3B84B" }}>
+        <section className="py-20 px-6 sm:px-8 md:px-16 bg-[#111120]">
+          <h2 className="font-serif text-4xl sm:text-5xl font-bold text-center mb-16" style={{ color: "#E3B84B" }}>
             How It Works
           </h2>
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
