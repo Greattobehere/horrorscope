@@ -27,10 +27,8 @@ async function addToKit(email: string) {
   }
 }
 
-// Saves the visitor to Resend's Contacts list (Resend dashboard -> Audience -> Contacts,
-// exportable as CSV), adds newsletter signups to Kit, and sends the welcome email.
-// Visitors who didn't tick the marketing box are saved as unsubscribed in Resend and
-// are never added to Kit.
+// Adds newsletter signups to Kit (the mailing list) and sends the welcome email
+// through Resend. Visitors who didn't tick the marketing box are never added to Kit.
 export async function POST(request: Request) {
   try {
     const { email, marketingConsent } = await request.json();
@@ -54,14 +52,6 @@ export async function POST(request: Request) {
     }
 
     const resend = new Resend(apiKey);
-
-    // The SDK returns errors instead of throwing; a repeat visitor already being a
-    // contact is fine, so this never blocks the welcome email.
-    const { error: contactError } = await resend.contacts.create({
-      email: address,
-      unsubscribed: marketingConsent !== true,
-    });
-    if (contactError) console.error("[Email capture] contact not saved:", address, contactError.message);
 
     await resend.emails.send({
       from: "HorrorScope <noreply@horrorscope.art>",
