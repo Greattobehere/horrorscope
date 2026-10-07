@@ -1,5 +1,6 @@
-import { unstable_cache } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { aiReading, type ReadingKind } from "@/lib/ai-reading";
+import { VoiceRefused, synthesize } from "@/lib/voice";
 import { READINGS } from "@/app/data/readings";
 
 // One reading per sign per day, like a newspaper horoscope. Each is written once,
@@ -35,16 +36,38 @@ function writtenReading(kind: ReadingKind, sign: string, date: string) {
   return list[dayOfYear % list.length];
 }
 
-// Throwing keeps a failed AI call out of the cache, so the next request tries again.
-const cachedAiReading = unstable_cache(
-  async (kind: ReadingKind, sign: string, date: string) => {
+const WITCH = { brightside: "sonia", horror: "moira" } as const;
+const tagFor = (kind: ReadingKind, sign: string, date: string) => `daily-${kind}-${sign}-${date}`;
+
+// Writes a reading the voice service will actually speak: fal's content filter
+// refuses some of Moira's darker lines, so those are rewritten (up to 3 tries).
+async function writeSpeakableReading(kind: ReadingKind, sign: string, date: string) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
     const text = await aiReading(kind, sign);
-    if (!text) throw new Error(`no AI reading for ${kind}/${sign}/${date}`);
-    return text;
-  },
-  ["daily-reading-v1"],
-  { revalidate: 3 * 86400 },
-);
+    if (!text) break;
+    try {
+      await synthesize(WITCH[kind], text);
+      return text; // spoken fine (or the voice service was just slow: that's retried later)
+    } catch (err) {
+      if (!(err instanceof VoiceRefused)) throw err;
+      console.warn(`Reading refused by the voice service, rewriting (${attempt}/3):`, text);
+    }
+  }
+  // Throwing keeps a failed reading out of the cache, so the next request tries again.
+  throw new Error(`no speakable AI reading for ${kind}/${sign}/${date}`);
+}
+
+const cachedAiReading = (kind: ReadingKind, sign: string, date: string) =>
+  unstable_cache(() => writeSpeakableReading(kind, sign, date), ["daily-reading-v1", kind, sign, date], {
+    revalidate: 3 * 86400,
+    tags: [tagFor(kind, sign, date)],
+  })();
+
+/** Drops a stored reading the voice service refused, so the next request writes a new one. */
+export function forgetReading(kind: ReadingKind, sign: string, date: string) {
+  revalidateTag(tagFor(kind, sign, date), { expire: 0 });
+  revalidatePath(`/api/daily/${kind}/${sign}/${date}`);
+}
 
 /** The day's reading for a sign: the AI one if it can be written, else the pre-written one. */
 export async function dailyReading(kind: ReadingKind, sign: string, date: string) {

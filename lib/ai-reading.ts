@@ -32,6 +32,7 @@ Rules you must never break:
 - The reading should feel genuinely unsettling but ultimately funny — horror-comedy, not horror.
 - End with a bone-dry prophecy or warning they won't forget.
 - Never be offensive, genuinely harmful, or cross into real distress territory.
+- Never mention death, dying, killing, blood, graves, burial or funerals: the voice service refuses those words.
 - Plain spoken words only: it is read aloud. No stage directions, asterisks, emojis or markdown.`,
     ask: (sign) => `Give a dark horror-comedy reading for a ${sign}. Expose their shadow side with wit and dread. Make it uniquely Moira.`,
   },

@@ -1,5 +1,5 @@
-import { dailyReading, validRequest } from "@/lib/daily";
-import { synthesize } from "@/lib/voice";
+import { dailyReading, forgetReading, validRequest } from "@/lib/daily";
+import { VoiceRefused, synthesize } from "@/lib/voice";
 
 // GET /api/daily-voice/sonia/leo/2026-10-07 -> the day's reading in her voice (WAV).
 // Voiced once per sign per day and then served from Vercel's cache, so visitors
@@ -23,7 +23,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ who
   const { text, cached } = await dailyReading(kind, sign, date);
   // Errors are thrown, never returned, so a failure is never cached for the day.
   if (!cached) throw new Error("AI reading unavailable");
-  const audio = await synthesize(who as keyof typeof KIND, text);
+  let audio;
+  try {
+    audio = await synthesize(who as keyof typeof KIND, text);
+  } catch (err) {
+    // A reading stored before refused readings were caught: write a new one.
+    if (err instanceof VoiceRefused) forgetReading(kind, sign, date);
+    throw err;
+  }
   if (!audio) throw new Error("Voice generation failed");
   return new Response(audio as BodyInit, {
     headers: { "Content-Type": "audio/wav", "Cache-Control": "public, max-age=3600, s-maxage=172800" },

@@ -102,8 +102,14 @@ function joinWithSilence(parts: Pcm[], pauseSeconds: number): Uint8Array | null 
   return out;
 }
 
+/** fal's content filter refused the words (it won't voice talk of death, for one). */
+export class VoiceRefused extends Error {}
+
+const REFUSED = "refused";
+
 async function speak(endpoint: string, key: string, voice: string, speed: number, text: string) {
   const url = await generate(endpoint, key, JSON.stringify({ prompt: text, voice, speed }));
+  if (url === REFUSED) throw new VoiceRefused(text);
   if (!url) return null;
   const res = await fetch(url);
   return res.ok ? res.arrayBuffer() : null;
@@ -130,7 +136,12 @@ async function generate(endpoint: string, key: string, body: string): Promise<st
           signal: controller.signal,
         })
           .then(async (res) => {
-            if (!res.ok) throw new Error(`fal ${res.status}: ${await res.text()}`);
+            if (!res.ok) {
+              const detail = await res.text();
+              // Asking again won't help: the same words are refused every time.
+              if (detail.includes("content_policy_violation")) return resolve(REFUSED);
+              throw new Error(`fal ${res.status}: ${detail}`);
+            }
             const { audio } = await res.json();
             resolve(audio.url as string);
           })
@@ -152,7 +163,10 @@ async function generate(endpoint: string, key: string, body: string): Promise<st
 
 export type Witch = keyof typeof VOICES;
 
-/** Speaks `text` as WAV bytes with a real pause after each sentence, or null if fal fails. */
+/**
+ * Speaks `text` as WAV bytes with a real pause after each sentence, or null if fal
+ * fails. Throws VoiceRefused when fal's content filter won't voice the words.
+ */
 export async function synthesize(who: Witch, text: string): Promise<ArrayBuffer | Uint8Array | null> {
   const key = process.env.FAL_KEY;
   if (!key) return null;
