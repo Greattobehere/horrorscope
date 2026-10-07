@@ -14,7 +14,7 @@ const VOICES = {
   sonia: { voice: "af_aoede", speed: 0.95, pauses: false },
 } as const;
 
-const MAX_CHARS = 800; // a reading is 2-4 sentences; this caps cost per request
+const MAX_CHARS = 1100; // greeting + a 2-4 sentence reading; this caps cost per request
 
 // fal can take 20s+ to answer when it is busy or waking up; give it time
 // instead of letting the platform's default timeout cut it off.

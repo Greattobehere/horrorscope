@@ -29,15 +29,17 @@ dashboard walkthrough for the Veil Season Pass. Summary:
 | Variable | Required | What breaks without it |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | No | Falls back to static pre-written readings instead of live AI generation |
-| `RESEND_API_KEY` | No | Welcome/unlock emails are logged to console instead of sent |
+| `RESEND_API_KEY` | No | Welcome/unlock emails are logged to console instead of sent, and visitor emails aren't saved to Resend Contacts |
+| `FAL_KEY` | No | The witches use the browser's built-in voice instead of their own |
 | `NEXT_PUBLIC_SITE_URL` | No | Defaults to `http://localhost:3000`; set to your real domain in production |
 | `PASS_SECRET` | For the pass | Needed before any Veil Season Pass tokens can be signed/verified |
 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | For the pass | Pass purchase webhook won't work |
 | `NEXT_PUBLIC_PAYMENT_LINK` | For the pass | The purchase button shows "Coming Soon" until this is a real Stripe Payment Link |
 
 No database is used — the pass system is stateless (HMAC-signed tokens,
-see `lib/pass.ts`), and there's no lead/subscriber storage beyond sending
-the welcome email.
+see `lib/pass.ts`), and visitor emails are saved as Resend Contacts (Resend dashboard → Audience →
+Contacts, exportable as CSV). Visitors who didn't tick the marketing box are
+saved as unsubscribed.
 
 ## Deploy
 

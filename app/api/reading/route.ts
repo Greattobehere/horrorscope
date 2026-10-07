@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { cleanReading } from "@/lib/clean-reading";
 import { getPass } from "@/lib/pass";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -14,6 +15,7 @@ Rules you must never break:
 - If the omen score is mid (31-60), play up cosmic uncertainty and ironic twists.
 - If the omen score is high (61-100), be effusively dramatic about their good fortune, but hint that luck is fickle.
 - Never be offensive, harmful, or genuinely scary — this is horror-comedy, not horror.
+- Plain spoken words only: it is read aloud. No stage directions, asterisks, emojis or markdown.
 - End with a single memorable phrase or "prophecy" — something they'll want to share.`;
 
 export async function POST(request: Request) {
@@ -43,7 +45,7 @@ export async function POST(request: Request) {
       messages: [{ role: "user", content: userMessage }],
     });
 
-    const text = message.content[0].type === "text" ? message.content[0].text : "";
+    const text = message.content[0].type === "text" ? cleanReading(message.content[0].text) : "";
 
     return Response.json({ reading: text });
   } catch (err) {

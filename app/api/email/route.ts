@@ -1,25 +1,37 @@
 import { Resend } from "resend";
 
+// Saves the visitor to Resend's Contacts list (Resend dashboard -> Audience -> Contacts,
+// exportable as CSV) and sends the welcome email. Visitors who didn't tick the
+// marketing box are saved as unsubscribed, so a broadcast can never reach them.
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json();
+    const { email, marketingConsent } = await request.json();
 
-    if (!email || typeof email !== "string") {
+    if (!email || typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return Response.json({ error: "Missing email" }, { status: 400 });
     }
+    const address = email.trim().toLowerCase();
 
     const apiKey = process.env.RESEND_API_KEY;
 
     if (!apiKey) {
-      console.log("[Email capture] RESEND_API_KEY not set — logging only:", email);
+      console.log("[Email capture] RESEND_API_KEY not set — logging only:", address);
       return Response.json({ success: true });
     }
 
     const resend = new Resend(apiKey);
 
+    // The SDK returns errors instead of throwing; a repeat visitor already being a
+    // contact is fine, so this never blocks the welcome email.
+    const { error: contactError } = await resend.contacts.create({
+      email: address,
+      unsubscribed: marketingConsent !== true,
+    });
+    if (contactError) console.error("[Email capture] contact not saved:", address, contactError.message);
+
     await resend.emails.send({
       from: "HorrorScope <noreply@horrorscope.art>",
-      to: email,
+      to: address,
       subject: "Your fate has been recorded, dear seeker.",
       html: `
         <div style="background:#0B0B14;color:#F2EEF7;padding:40px;font-family:serif;max-width:600px;margin:0 auto;border:2px solid #E3B84B;border-radius:12px;">

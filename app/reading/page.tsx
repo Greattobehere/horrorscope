@@ -36,6 +36,7 @@ function ReadingPageInner() {
   const [aiBrightSide, setAiBrightSide] = useState<string>("");
   const [aiHorrorMirror, setAiHorrorMirror] = useState<string>("");
   const [isLoadingReadings, setIsLoadingReadings] = useState(false);
+  const [readingsDone, setReadingsDone] = useState(false);
 
   useEffect(() => {
     const storedSign = typeof window !== "undefined" ? localStorage.getItem("horrorscope-sign") : "";
@@ -81,6 +82,7 @@ function ReadingPageInner() {
       })
       .finally(() => {
         setIsLoadingReadings(false);
+        setReadingsDone(true);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, sign]);
@@ -136,6 +138,12 @@ function ReadingPageInner() {
   // Use AI reading if available, fall back to static
   const displayBrightSide = aiBrightSide || brightSideText;
   const displayHorrorMirror = aiHorrorMirror || horrorMirrorText;
+
+  // The witches wait for the finished reading before they greet and read it,
+  // so they never start on the stand-in text and get cut off when it changes.
+  const readingsReady = !isLoading && (readingsDone || !sign);
+  const soniaGreeting = `Welcome, dear ${signLabel}. I'm Sonia, and I only bring good news. Here is the bright side of your stars.`;
+  const moiraGreeting = `Well, well. Hello, ${signLabel}. I'm Moira, Sonia's twin, and she was far too kind. Here is what your stars are really saying.`;
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 3000);
@@ -351,7 +359,7 @@ function ReadingPageInner() {
           <div className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="border-4 border-[#E3B84B] rounded-lg p-6 flex items-center justify-center">
-                <TalkingWitch who="sonia" text={displayBrightSide} disabled={isLoadingReadings && !aiBrightSide} />
+                <TalkingWitch who="sonia" text={displayBrightSide} greeting={soniaGreeting} autoPlay disabled={!readingsReady} />
               </div>
 
               <div className="bg-[#1A1A2E] border-2 border-[#E3B84B] rounded-lg p-8">
@@ -407,7 +415,7 @@ function ReadingPageInner() {
 
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="flicker border-4 rounded-lg p-6 flex items-center justify-center" style={{ borderColor: "#2EE59D" }}>
-                <TalkingWitch who="moira" text={displayHorrorMirror} disabled={isLoadingReadings && !aiHorrorMirror} />
+                <TalkingWitch who="moira" text={displayHorrorMirror} greeting={moiraGreeting} autoPlay disabled={!readingsReady} />
               </div>
 
               <div className="bg-[#1A1A2E] rounded-lg p-8" style={{ borderColor: "#2EE59D", borderWidth: "2px" }}>

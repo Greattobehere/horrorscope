@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -21,23 +21,33 @@ const getZodiacSign = (month: number, day: number): string => {
   return "Unknown";
 };
 
+const noopSubscribe = () => () => {};
+const stored = (key: string) => {
+  try {
+    return localStorage.getItem(key) ?? "";
+  } catch {
+    return "";
+  }
+};
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [birthDate, setBirthDate] = useState("");
-  const [zodiacSign, setZodiacSign] = useState("");
+  // Returning visitors: their birthday is filled in, and once they've given an
+  // email the email step is skipped for good on this device.
+  const savedBirthDate = useSyncExternalStore(noopSubscribe, () => stored("horrorscope-birthdate"), () => "");
+  const emailSaved = useSyncExternalStore(noopSubscribe, () => stored("horrorscope-email") !== "", () => false);
+  const totalSteps = emailSaved ? 1 : 2;
+  const [typedBirthDate, setBirthDate] = useState<string | null>(null);
+  const birthDate = typedBirthDate ?? savedBirthDate;
+  const zodiacSign = birthDate
+    ? getZodiacSign(parseInt(birthDate.split("-")[1]), parseInt(birthDate.split("-")[2]))
+    : "";
   const [email, setEmail] = useState("");
   const [marketingConsent, setMarketingConsent] = useState(false);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const date = e.target.value;
-    setBirthDate(date);
-
-    if (date) {
-      const [, month, day] = date.split("-");
-      const zodiac = getZodiacSign(parseInt(month), parseInt(day));
-      setZodiacSign(zodiac);
-    }
+    setBirthDate(e.target.value);
   };
 
   const handleNextStep = () => {
@@ -46,7 +56,7 @@ export default function OnboardingPage() {
       return;
     }
 
-    if (step < 2) {
+    if (step < totalSteps) {
       setStep(step + 1);
     }
   };
@@ -58,12 +68,17 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = () => {
+    if (!birthDate) {
+      alert("Please enter your birth date");
+      return;
+    }
     // persist sign and email locally
     const normalizedSign = zodiacSign.toLowerCase();
     if (normalizedSign) {
       localStorage.setItem("horrorscope-sign", normalizedSign);
+      localStorage.setItem("horrorscope-birthdate", birthDate);
     }
-    if (email) {
+    if (email && !emailSaved) {
       localStorage.setItem("horrorscope-email", email);
       // fire-and-forget welcome email
       fetch("/api/email", {
@@ -87,7 +102,7 @@ export default function OnboardingPage() {
             </h1>
           </Link>
           <div className="flex gap-2">
-            {[1, 2].map((num) => (
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((num) => (
               <div
                 key={num}
                 className={`w-3 h-3 rounded-full transition-all ${
@@ -199,7 +214,7 @@ export default function OnboardingPage() {
               ← Back
             </button>
 
-            {step < 2 ? (
+            {step < totalSteps ? (
               <button
                 onClick={handleNextStep}
                 className="px-8 py-3 rounded-lg font-semibold transition"
@@ -230,7 +245,7 @@ export default function OnboardingPage() {
 
           {/* Step Indicator */}
           <div className="text-center mt-8 text-[#D4C5F9] text-sm">
-            Step {step} of 2
+            Step {step} of {totalSteps}
           </div>
         </div>
 

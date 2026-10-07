@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { cleanReading } from "@/lib/clean-reading";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -11,7 +12,8 @@ Rules you must never break:
 - Reference the zodiac sign naturally.
 - The reading should feel genuinely encouraging but with an undercurrent of cosmic absurdity.
 - End with something quotable — a line they'd want to share.
-- Never be offensive, harmful, or genuinely scary.`;
+- Never be offensive, harmful, or genuinely scary.
+- Plain spoken words only: it is read aloud. No stage directions, asterisks, emojis or markdown.`;
 
 export async function POST(request: Request) {
   try {
@@ -19,6 +21,11 @@ export async function POST(request: Request) {
 
     if (!sign) {
       return Response.json({ error: "Missing sign" }, { status: 400 });
+    }
+
+    // No key: the page quietly uses its pre-written readings instead.
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return Response.json({ error: "AI readings not configured" }, { status: 503 });
     }
 
     const message = await client.messages.create({
@@ -33,7 +40,7 @@ export async function POST(request: Request) {
       ],
     });
 
-    const text = message.content[0].type === "text" ? message.content[0].text : "";
+    const text = message.content[0].type === "text" ? cleanReading(message.content[0].text) : "";
     return Response.json({ reading: text });
   } catch (err) {
     console.error("Brightside reading API error:", err);

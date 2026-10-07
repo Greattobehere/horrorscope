@@ -8,6 +8,10 @@ interface TalkingWitchProps {
   who: Witch;
   text: string;
   disabled?: boolean;
+  /** Spoken (and shown) before the reading, e.g. "Welcome, dear Leo..." */
+  greeting?: string;
+  /** Start talking on her own as soon as the reading is ready. */
+  autoPlay?: boolean;
 }
 
 // Layered portrait: base image, plus a mouth-open patch and an eyes-closed patch
@@ -97,8 +101,15 @@ function pickVoice(): SpeechSynthesisVoice | undefined {
   return voices.find((v) => !/David|Mark|George|Guy|Daniel|Alex|Fred/i.test(v.name)) ?? voices[0];
 }
 
-export default function TalkingWitch({ who, text, disabled = false }: TalkingWitchProps) {
+// Browsers only allow sound after the visitor has clicked or tapped the page.
+const hasInteracted = () =>
+  (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? false;
+
+export default function TalkingWitch({ who, text: reading, disabled = false, greeting = "", autoPlay = false }: TalkingWitchProps) {
   const layers = LAYERS[who];
+  const text = reading ? (greeting ? `${greeting} ${reading}` : reading) : "";
+  const autoPlayedRef = useRef("");
+  const [waitingForTap, setWaitingForTap] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [mouth, setMouth] = useState(0);
   const [blink, setBlink] = useState(false);
@@ -260,9 +271,18 @@ export default function TalkingWitch({ who, text, disabled = false }: TalkingWit
         }, 1500);
       };
       await audio.play();
-    } catch {
+    } catch (err) {
       clearTimeout(timeout);
       setLoading(false);
+      if (err instanceof DOMException && err.name === "NotAllowedError") {
+        // The browser blocked sound before any tap: wait for one instead.
+        closeAudio();
+        stopMouth();
+        setSpeaking(false);
+        autoPlayedRef.current = "";
+        setWaitingForTap(true);
+        return;
+      }
       // Don't reuse a failed or abandoned prefetch on the next press.
       if (prefetchRef.current?.text === text) prefetchRef.current = null;
       if (abortRef.current !== controller) return; // the visitor pressed Stop
@@ -273,7 +293,40 @@ export default function TalkingWitch({ who, text, disabled = false }: TalkingWit
       setSpeaking(false);
       if (supported) speakWithBrowser();
     }
-  }, [text, who, supported, stopMouth, speakWithBrowser]);
+  }, [text, who, supported, stopMouth, speakWithBrowser, closeAudio]);
+
+  // Greet and read on her own once the reading is ready. Without an earlier tap
+  // the browser would mute her, so then she starts on the visitor's first tap.
+  useEffect(() => {
+    if (!autoPlay || disabled || !text || autoPlayedRef.current === text) return;
+    const start = () => {
+      if (autoPlayedRef.current === text) return;
+      autoPlayedRef.current = text;
+      setWaitingForTap(false);
+      void speak();
+    };
+    if (hasInteracted() && !waitingForTap) {
+      const timer = setTimeout(start, 0); // after React's dev double-mount settles
+      return () => clearTimeout(timer);
+    }
+    const onTap = (e: Event) => {
+      // A tap on her own button is handled by the button itself.
+      if ((e.target as Element | null)?.closest?.("[data-witch-button]")) {
+        autoPlayedRef.current = text;
+        setWaitingForTap(false);
+        return;
+      }
+      start();
+    };
+    window.addEventListener("pointerup", onTap, { once: true });
+    window.addEventListener("keydown", onTap, { once: true });
+    const label = setTimeout(() => setWaitingForTap(true), 0);
+    return () => {
+      clearTimeout(label);
+      window.removeEventListener("pointerup", onTap);
+      window.removeEventListener("keydown", onTap);
+    };
+  }, [autoPlay, disabled, text, speak, waitingForTap]);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -296,8 +349,12 @@ export default function TalkingWitch({ who, text, disabled = false }: TalkingWit
           draggable={false}
         />
       </div>
+      {greeting && reading && (
+        <p className="max-w-[300px] text-center italic text-[#D4C5F9]">&ldquo;{greeting}&rdquo;</p>
+      )}
       {(
         <button
+          data-witch-button
           onClick={speaking ? stop : speak}
           disabled={disabled || !text}
           className="px-5 py-2 rounded-lg font-semibold hover:opacity-80 transition disabled:opacity-40"
@@ -307,7 +364,13 @@ export default function TalkingWitch({ who, text, disabled = false }: TalkingWit
           }}
           aria-label={speaking ? `Stop ${layers.name}` : `Hear ${layers.name} read your fortune`}
         >
-          {loading ? `✦ Summoning ${layers.name}…` : speaking ? "■ Stop" : `▶ Hear ${layers.name}`}
+          {loading
+            ? `✦ Summoning ${layers.name}…`
+            : speaking
+              ? "■ Stop"
+              : waitingForTap
+                ? `▶ Tap to hear ${layers.name}`
+                : `▶ Hear ${layers.name}`}
         </button>
       )}
     </div>
