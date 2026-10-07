@@ -146,6 +146,7 @@ function ReadingPageInner() {
   const moiraGreeting = `Well, well. Hello, ${signLabel}. I'm Moira, Sonia's twin, and she was far too kind. Here is what your stars are really saying.`;
 
   useEffect(() => {
+    fetch("/api/voice?warm=1").catch(() => {}); // returning visitors may skip onboarding
     const timer = setTimeout(() => setIsLoading(false), 3000);
     return () => clearTimeout(timer);
   }, []);

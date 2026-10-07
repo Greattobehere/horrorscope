@@ -168,6 +168,13 @@ export async function GET(request: Request) {
 
   try {
     const params = new URL(request.url).searchParams;
+    // fal can take 30s to answer the first request after a quiet spell. The pages
+    // send a tiny ?warm request as the visitor arrives so it's awake by the reading.
+    if (params.has("warm")) {
+      const fresh = `Hi ${Date.now() % 1000}.`; // unique, so fal really runs it
+      await generate(endpointFor(VOICES.sonia.voice), key, JSON.stringify({ prompt: fresh, voice: VOICES.sonia.voice }));
+      return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+    }
     const who = params.get("who") ?? "";
     const text = params.get("text") ?? "";
     const config = VOICES[who as keyof typeof VOICES];

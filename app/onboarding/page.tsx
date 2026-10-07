@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -32,6 +32,10 @@ const stored = (key: string) => {
 
 export default function OnboardingPage() {
   const router = useRouter();
+  // Wake the voice service now so the witches can speak as soon as the reading opens.
+  useEffect(() => {
+    fetch("/api/voice?warm=1").catch(() => {});
+  }, []);
   const [step, setStep] = useState(1);
   // Returning visitors: their birthday is filled in, and once they've given an
   // email the email step is skipped for good on this device.
