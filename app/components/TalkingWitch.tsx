@@ -7,10 +7,13 @@ type Witch = "moira" | "sonia";
 interface TalkingWitchProps {
   who: Witch;
   text: string;
+  /** True while the reading is still being written. */
   disabled?: boolean;
   /** Spoken (and shown) before the reading, e.g. "Welcome, dear Leo..." */
   greeting?: string;
-  /** Start talking on her own as soon as the reading is ready. */
+  /** Pre-recorded greeting, so she starts talking before the reading is written. */
+  greetingAudio?: string;
+  /** Start talking on her own. */
   autoPlay?: boolean;
 }
 
@@ -44,13 +47,25 @@ const SOUND: Record<Witch, { lowpass: number; gain: number; reverb: number; wind
   sonia: { lowpass: 12000, gain: 1, reverb: 0.06, wind: 0 },
 };
 
-// Longest we wait for the voice service before using the browser's own voice.
-const VOICE_TIMEOUT_MS = 35000;
+// Longest we wait for the reading's voice before using the browser's own voice.
+const VOICE_TIMEOUT_MS = 25000;
 
-async function fetchVoice(who: Witch, text: string): Promise<Blob> {
-  const res = await fetch(`/api/voice?${new URLSearchParams({ who, text })}`);
-  if (!res.ok) throw new Error(`voice ${res.status}`);
-  return res.blob();
+// One request per witch + words, shared by the page's early prefetch and the
+// portrait itself. A failed request is forgotten so the next try starts fresh.
+const voices = new Map<string, Promise<Blob>>();
+
+export function prefetchVoice(who: Witch, text: string): Promise<Blob> {
+  const key = `${who}|${text}`;
+  let voice = voices.get(key);
+  if (!voice) {
+    voice = fetch(`/api/voice?${new URLSearchParams({ who, text })}`).then((res) => {
+      if (!res.ok) throw new Error(`voice ${res.status}`);
+      return res.blob();
+    });
+    voice.catch(() => voices.delete(key));
+    voices.set(key, voice);
+  }
+  return voice;
 }
 
 // A short decaying burst of noise: a cheap, natural-sounding reverb tail.
@@ -105,15 +120,39 @@ function pickVoice(): SpeechSynthesisVoice | undefined {
 const hasInteracted = () =>
   (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? false;
 
-export default function TalkingWitch({ who, text: reading, disabled = false, greeting = "", autoPlay = false }: TalkingWitchProps) {
+interface Session {
+  ctx: AudioContext;
+  audio: HTMLAudioElement;
+  stopped: boolean;
+  frame: number | null;
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+export default function TalkingWitch({
+  who,
+  text: reading,
+  disabled = false,
+  greeting = "",
+  greetingAudio = "",
+  autoPlay = false,
+}: TalkingWitchProps) {
   const layers = LAYERS[who];
-  const text = reading ? (greeting ? `${greeting} ${reading}` : reading) : "";
-  const autoPlayedRef = useRef("");
+  // With a recorded greeting the voice service only has to make the reading;
+  // without one, she says the greeting as part of the reading.
+  const spoken = reading ? (greeting && !greetingAudio ? `${greeting} ${reading}` : reading) : "";
+  const readingReady = !disabled && !!spoken;
+  const canStart = readingReady || !!greetingAudio;
+
+  const [status, setStatus] = useState<"idle" | "loading" | "speaking">("idle");
   const [waitingForTap, setWaitingForTap] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
   const [mouth, setMouth] = useState(0);
   const [blink, setBlink] = useState(false);
   const supported = useSyncExternalStore(noopSubscribe, () => "speechSynthesis" in window, () => false);
+  const sessionRef = useRef<Session | null>(null);
+  const greetingRef = useRef<Promise<Blob | null> | null>(null);
+  const voiceRef = useRef<{ text: string; voice: Promise<Blob> } | null>(null);
+  const startedRef = useRef(false);
   const mouthTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Idle blinking, every few seconds.
@@ -130,182 +169,208 @@ export default function TalkingWitch({ who, text: reading, disabled = false, gre
     return () => clearTimeout(timeout);
   }, []);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const frameRef = useRef<number | null>(null);
-  const ctxRef = useRef<AudioContext | null>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  const [loading, setLoading] = useState(false);
-  const prefetchRef = useRef<{ text: string; voice: Promise<Blob> } | null>(null);
-
-  // Start making the voice as soon as the reading is final, so pressing the
-  // button plays right away even when the voice service is slow.
+  // Download the recorded greeting straight away; it's a small file.
   useEffect(() => {
-    if (!text || disabled || prefetchRef.current?.text === text) return;
-    const voice = fetchVoice(who, text);
-    voice.catch(() => {}); // a failure is handled when the visitor presses play
-    prefetchRef.current = { text, voice };
-  }, [who, text, disabled]);
+    greetingRef.current = greetingAudio
+      ? fetch(greetingAudio)
+          .then((r) => (r.ok ? r.blob() : null))
+          .catch(() => null)
+      : null;
+  }, [greetingAudio]);
 
-  const closeAudio = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-    audioRef.current?.pause();
-    audioRef.current = null;
-    ctxRef.current?.close();
-    ctxRef.current = null;
-  }, []);
+  // Start making the reading's voice the moment the reading is final, so it's
+  // ready by the time she finishes saying hello.
+  useEffect(() => {
+    if (!readingReady || voiceRef.current?.text === spoken) return;
+    const voice = prefetchVoice(who, spoken);
+    voice.catch(() => {}); // handled when it's her turn to read
+    voiceRef.current = { text: spoken, voice };
+  }, [who, spoken, readingReady]);
 
   const stopMouth = useCallback(() => {
     if (mouthTimer.current) clearInterval(mouthTimer.current);
     mouthTimer.current = null;
-    if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    frameRef.current = null;
     setMouth(0);
   }, []);
 
-  const stop = useCallback(() => {
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    closeAudio();
-    stopMouth();
-    setLoading(false);
-    setSpeaking(false);
-  }, [stopMouth, closeAudio]);
+  const endSession = useCallback((session: Session | null) => {
+    if (!session || session.stopped) return;
+    session.stopped = true;
+    if (session.frame) cancelAnimationFrame(session.frame);
+    session.audio.pause();
+    const ctx = session.ctx;
+    setTimeout(() => ctx.close(), 1500); // let any echo fade out
+    if (sessionRef.current === session) sessionRef.current = null;
+  }, []);
 
-  // Stop talking if the text changes or the component goes away.
-  useEffect(() => () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
-    closeAudio();
-    if (mouthTimer.current) clearInterval(mouthTimer.current);
-    if (frameRef.current) cancelAnimationFrame(frameRef.current);
-  }, [text, closeAudio]);
+  // One audio element and one sound chain per performance; the mouth follows it.
+  const startSession = useCallback((): Session => {
+    const ctx = new AudioContext(); // made during the tap, or browsers keep it muted
+    void ctx.resume(); // never await: without a real tap it waits forever
+    const audio = new Audio();
+    const session: Session = { ctx, audio, stopped: false, frame: null };
+    const sound = SOUND[who];
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    // The analyser must sit in the audio path or Chrome never feeds it samples.
+    const source = ctx.createMediaElementSource(audio);
+    const tone = ctx.createBiquadFilter();
+    tone.type = "lowpass";
+    tone.frequency.value = sound.lowpass;
+    const level = ctx.createGain();
+    level.gain.value = sound.gain;
+    source.connect(analyser).connect(tone).connect(level).connect(ctx.destination);
+    if (sound.reverb > 0) {
+      const room = ctx.createConvolver();
+      room.buffer = impulse(ctx);
+      const wet = ctx.createGain();
+      wet.gain.value = sound.reverb;
+      level.connect(room).connect(wet).connect(ctx.destination);
+    }
+    if (sound.wind > 0) startWind(ctx, sound.wind);
+    const samples = new Uint8Array(analyser.fftSize);
+    // Scale the mouth to this voice's own loudness: Moira's voice is quieter.
+    let peak = 0.05;
+    let open = 0;
+    const tick = () => {
+      analyser.getByteTimeDomainData(samples);
+      let sum = 0;
+      for (const v of samples) sum += ((v - 128) / 128) ** 2;
+      const rms = Math.sqrt(sum / samples.length);
+      peak = Math.max(rms, peak * 0.997);
+      const target = rms < 0.015 ? 0 : Math.min(1, Math.max(0, (rms - 0.01) / (peak * 0.6)));
+      // Open quickly on a syllable, close a touch slower: reads as speech, not flicker.
+      open = target > open ? open + (target - open) * 0.6 : open + (target - open) * 0.35;
+      setMouth(open < 0.04 ? 0 : open);
+      session.frame = requestAnimationFrame(tick);
+    };
+    session.frame = requestAnimationFrame(tick);
+    return session;
+  }, [who]);
 
-  const speakWithBrowser = useCallback(() => {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    const voice = pickVoice();
-    if (voice) utterance.voice = voice;
-    utterance.pitch = DELIVERY[who].pitch;
-    utterance.rate = DELIVERY[who].rate;
-    utterance.onstart = () => {
-      setSpeaking(true);
-      mouthTimer.current = setInterval(() => setMouth(0.25 + Math.random() * 0.75), 110);
-    };
-    utterance.onboundary = () => setMouth(1);
-    utterance.onend = () => {
-      stopMouth();
-      setSpeaking(false);
-    };
-    utterance.onerror = utterance.onend;
-    window.speechSynthesis.speak(utterance);
-  }, [text, who, stopMouth]);
+  const speakWithBrowser = useCallback(
+    (words: string) => {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(words);
+      const voice = pickVoice();
+      if (voice) utterance.voice = voice;
+      utterance.pitch = DELIVERY[who].pitch;
+      utterance.rate = DELIVERY[who].rate;
+      utterance.onstart = () => {
+        setStatus("speaking");
+        mouthTimer.current = setInterval(() => setMouth(0.25 + Math.random() * 0.75), 110);
+      };
+      utterance.onboundary = () => setMouth(1);
+      utterance.onend = () => {
+        stopMouth();
+        setStatus("idle");
+      };
+      utterance.onerror = utterance.onend;
+      window.speechSynthesis.speak(utterance);
+    },
+    [who, stopMouth],
+  );
 
   const speak = useCallback(async () => {
-    if (!text) return;
-    setSpeaking(true);
-    setLoading(true);
-    // Create the audio context during the click itself; browsers keep one made
-    // later (after the voice download) suspended, which silences the voice.
-    const ctx = new AudioContext();
-    ctxRef.current = ctx;
-    const controller = new AbortController();
-    abortRef.current = controller;
-    const timeout = setTimeout(() => controller.abort(), VOICE_TIMEOUT_MS);
-    try {
-      const prefetched = prefetchRef.current;
-      const voice = prefetched && prefetched.text === text ? prefetched.voice : fetchVoice(who, text);
-      const stopped = new Promise<never>((_, reject) =>
-        controller.signal.addEventListener("abort", () => reject(new Error("stopped"))),
-      );
-      const blob = await Promise.race([voice, stopped]);
-      const url = URL.createObjectURL(blob);
-      clearTimeout(timeout);
-      if (abortRef.current !== controller) return; // stopped while loading
-      abortRef.current = null;
-      setLoading(false);
-      const audio = new Audio(url);
-      audioRef.current = audio;
+    if (!canStart) return;
+    endSession(sessionRef.current);
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    const session = startSession();
+    sessionRef.current = session;
 
-      // Voice -> soften -> dry out + room echo. The mouth follows the dry voice.
-      void ctx.resume(); // never await: without a real click it waits forever
-      const sound = SOUND[who];
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      // The analyser must sit in the audio path or Chrome never feeds it samples.
-      const source = ctx.createMediaElementSource(audio);
-      const tone = ctx.createBiquadFilter();
-      tone.type = "lowpass";
-      tone.frequency.value = sound.lowpass;
-      const level = ctx.createGain();
-      level.gain.value = sound.gain;
-      source.connect(analyser).connect(tone).connect(level).connect(ctx.destination);
-      if (sound.reverb > 0) {
-        const room = ctx.createConvolver();
-        room.buffer = impulse(ctx);
-        const wet = ctx.createGain();
-        wet.gain.value = sound.reverb;
-        level.connect(room).connect(wet).connect(ctx.destination);
+    const play = (blob: Blob) =>
+      new Promise<void>((resolve, reject) => {
+        const url = URL.createObjectURL(blob);
+        const done = () => {
+          URL.revokeObjectURL(url);
+          resolve();
+        };
+        session.audio.onended = done;
+        session.audio.onpause = () => {
+          if (session.stopped) done();
+        };
+        session.audio.src = url;
+        session.audio.play().catch((err) => {
+          URL.revokeObjectURL(url);
+          reject(err);
+        });
+      });
+
+    // Waits (up to the timeout) for the reading to be written and voiced.
+    const readingVoice = async (): Promise<Blob | null> => {
+      const deadline = Date.now() + VOICE_TIMEOUT_MS;
+      while (!voiceRef.current && Date.now() < deadline && !session.stopped) await sleep(150);
+      const pending = voiceRef.current;
+      if (!pending || session.stopped) return null;
+      const left = Math.max(1000, deadline - Date.now());
+      return Promise.race([pending.voice, sleep(left).then(() => null)]).catch(() => null);
+    };
+
+    try {
+      // 1. Hello, from the recording, while her reading is still being voiced.
+      const hello = greetingRef.current
+        ? await Promise.race([greetingRef.current, sleep(4000).then(() => null)])
+        : null;
+      if (session.stopped) return;
+      if (hello) {
+        setStatus("speaking");
+        await play(hello);
+        if (session.stopped) return;
+        await sleep(450);
       }
-      if (sound.wind > 0) startWind(ctx, sound.wind);
-      const samples = new Uint8Array(analyser.fftSize);
-      // Scale the mouth to this voice's own loudness: Moira's breathy voice is
-      // much quieter than Sonia's and barely opened her mouth on a fixed scale.
-      let peak = 0.05;
-      let open = 0;
-      const tick = () => {
-        analyser.getByteTimeDomainData(samples);
-        let sum = 0;
-        for (const v of samples) sum += ((v - 128) / 128) ** 2;
-        const rms = Math.sqrt(sum / samples.length);
-        peak = Math.max(rms, peak * 0.997);
-        const target = rms < 0.015 ? 0 : Math.min(1, Math.max(0, (rms - 0.01) / (peak * 0.6)));
-        // Open quickly on a syllable, close a touch slower: reads as speech, not flicker.
-        open = target > open ? open + (target - open) * 0.6 : open + (target - open) * 0.35;
-        setMouth(open < 0.04 ? 0 : open);
-        frameRef.current = requestAnimationFrame(tick);
-      };
-      audio.onplay = () => tick();
-      audio.onended = () => {
+      // 2. The reading.
+      setStatus("loading");
+      const voice = await readingVoice();
+      if (session.stopped) return;
+      if (voice) {
+        setStatus("speaking");
+        await play(voice);
+        endSession(session);
         stopMouth();
-        setSpeaking(false);
-        URL.revokeObjectURL(url);
-        // Let the echo and wind fade out before closing.
-        setTimeout(() => {
-          if (ctxRef.current === ctx) ctxRef.current = null;
-          ctx.close();
-        }, 1500);
-      };
-      await audio.play();
-    } catch (err) {
-      clearTimeout(timeout);
-      setLoading(false);
-      if (err instanceof DOMException && err.name === "NotAllowedError") {
-        // The browser blocked sound before any tap: wait for one instead.
-        closeAudio();
-        stopMouth();
-        setSpeaking(false);
-        autoPlayedRef.current = "";
-        setWaitingForTap(true);
+        setStatus("idle");
         return;
       }
-      // Don't reuse a failed or abandoned prefetch on the next press.
-      if (prefetchRef.current?.text === text) prefetchRef.current = null;
-      if (abortRef.current !== controller) return; // the visitor pressed Stop
-      abortRef.current = null;
-      if (ctxRef.current === ctx) ctxRef.current = null;
-      ctx.close();
-      // Voice service not configured, too slow, or unavailable: use the browser's voice.
-      setSpeaking(false);
-      if (supported) speakWithBrowser();
+      // Voice service unavailable or too slow: use the browser's voice.
+      endSession(session);
+      stopMouth();
+      voiceRef.current = null; // a later press asks the voice service again
+      if (supported && spoken) speakWithBrowser(spoken);
+      else setStatus("idle");
+    } catch (err) {
+      endSession(session);
+      stopMouth();
+      setStatus("idle");
+      if (err instanceof DOMException && err.name === "NotAllowedError") {
+        startedRef.current = false; // the browser blocked sound: wait for a tap
+        setWaitingForTap(true);
+      }
     }
-  }, [text, who, supported, stopMouth, speakWithBrowser, closeAudio]);
+  }, [canStart, spoken, supported, startSession, endSession, stopMouth, speakWithBrowser]);
 
-  // Greet and read on her own once the reading is ready. Without an earlier tap
-  // the browser would mute her, so then she starts on the visitor's first tap.
+  const stop = useCallback(() => {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    endSession(sessionRef.current);
+    stopMouth();
+    setStatus("idle");
+  }, [endSession, stopMouth]);
+
+  // Stop talking when she leaves the page.
+  useEffect(
+    () => () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+      endSession(sessionRef.current);
+      if (mouthTimer.current) clearInterval(mouthTimer.current);
+    },
+    [endSession],
+  );
+
+  // Greet and read on her own. Without an earlier tap the browser would mute
+  // her, so then she starts on the visitor's first tap anywhere on the page.
   useEffect(() => {
-    if (!autoPlay || disabled || !text || autoPlayedRef.current === text) return;
+    if (!autoPlay || !canStart || startedRef.current) return;
     const start = () => {
-      if (autoPlayedRef.current === text) return;
-      autoPlayedRef.current = text;
+      if (startedRef.current) return;
+      startedRef.current = true;
       setWaitingForTap(false);
       void speak();
     };
@@ -315,11 +380,7 @@ export default function TalkingWitch({ who, text: reading, disabled = false, gre
     }
     const onTap = (e: Event) => {
       // A tap on her own button is handled by the button itself.
-      if ((e.target as Element | null)?.closest?.("[data-witch-button]")) {
-        autoPlayedRef.current = text;
-        setWaitingForTap(false);
-        return;
-      }
+      if ((e.target as Element | null)?.closest?.("[data-witch-button]")) return;
       start();
     };
     window.addEventListener("pointerup", onTap, { once: true });
@@ -330,7 +391,14 @@ export default function TalkingWitch({ who, text: reading, disabled = false, gre
       window.removeEventListener("pointerup", onTap);
       window.removeEventListener("keydown", onTap);
     };
-  }, [autoPlay, disabled, text, speak, waitingForTap]);
+  }, [autoPlay, canStart, speak, waitingForTap]);
+
+  const onButton = () => {
+    if (status !== "idle") return stop();
+    startedRef.current = true;
+    setWaitingForTap(false);
+    void speak();
+  };
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -353,30 +421,26 @@ export default function TalkingWitch({ who, text: reading, disabled = false, gre
           draggable={false}
         />
       </div>
-      {greeting && reading && (
-        <p className="max-w-[300px] text-center italic text-[#D4C5F9]">&ldquo;{greeting}&rdquo;</p>
-      )}
-      {(
-        <button
-          data-witch-button
-          onClick={speaking ? stop : speak}
-          disabled={disabled || !text}
-          className="px-5 py-2 rounded-lg font-semibold hover:opacity-80 transition disabled:opacity-40"
-          style={{
-            color: who === "moira" ? "#2EE59D" : "#E3B84B",
-            border: `2px solid ${who === "moira" ? "#2EE59D" : "#E3B84B"}`,
-          }}
-          aria-label={speaking ? `Stop ${layers.name}` : `Hear ${layers.name} read your fortune`}
-        >
-          {loading
-            ? `✦ Summoning ${layers.name}…`
-            : speaking
-              ? "■ Stop"
-              : waitingForTap
-                ? `▶ Tap to hear ${layers.name}`
-                : `▶ Hear ${layers.name}`}
-        </button>
-      )}
+      {greeting && <p className="max-w-[300px] text-center italic text-[#D4C5F9]">&ldquo;{greeting}&rdquo;</p>}
+      <button
+        data-witch-button
+        onClick={onButton}
+        disabled={!canStart}
+        className="px-5 py-2 rounded-lg font-semibold hover:opacity-80 transition disabled:opacity-40"
+        style={{
+          color: who === "moira" ? "#2EE59D" : "#E3B84B",
+          border: `2px solid ${who === "moira" ? "#2EE59D" : "#E3B84B"}`,
+        }}
+        aria-label={status === "idle" ? `Hear ${layers.name} read your fortune` : `Stop ${layers.name}`}
+      >
+        {status === "loading"
+          ? `✦ ${layers.name} is reading your stars…`
+          : status === "speaking"
+            ? "■ Stop"
+            : waitingForTap
+              ? `▶ Tap to hear ${layers.name}`
+              : `▶ Hear ${layers.name}`}
+      </button>
     </div>
   );
 }

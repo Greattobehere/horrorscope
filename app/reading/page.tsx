@@ -1,18 +1,28 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toPng } from "html-to-image";
 import PortraitCrossfade from "../components/PortraitCrossfade";
-import TalkingWitch from "../components/TalkingWitch";
+import TalkingWitch, { prefetchVoice } from "../components/TalkingWitch";
 import ShareCard from "../components/ShareCard";
 import { Suspense } from "react"
 import { READINGS, getReadingIndex } from "../data/readings";
 import { getRealPaymentLink } from "@/lib/payment-link";
 
+const noopSubscribe = () => () => {};
+// Browsers mute sound until the visitor has tapped the page at least once.
+const needsTapNow = () =>
+  !((navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? true);
+
 function ReadingPageInner() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [introDone, setIntroDone] = useState(false);
+  const [, setTapped] = useState(false);
+  // Someone who opened a reading link directly hasn't tapped yet, so the intro
+  // ends with a button; that one tap lets both witches speak.
+  const needsTap = useSyncExternalStore(noopSubscribe, needsTapNow, () => false);
+  const isLoading = !introDone || needsTap;
   const [currentPart, setCurrentPart] = useState(1);
   const [copied, setCopied] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
@@ -54,7 +64,6 @@ function ReadingPageInner() {
 
   // Fetch AI readings after the loading screen completes
   useEffect(() => {
-    if (isLoading) return; // wait for 3-second loading screen to finish
     if (!sign) return;
     if (aiBrightSide && aiHorrorMirror) return; // already have results
 
@@ -85,7 +94,7 @@ function ReadingPageInner() {
         setReadingsDone(true);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, sign]);
+  }, [sign]);
 
   const signLabel = sign ? sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase() : "Scorpio";
 
@@ -141,13 +150,20 @@ function ReadingPageInner() {
 
   // The witches wait for the finished reading before they greet and read it,
   // so they never start on the stand-in text and get cut off when it changes.
-  const readingsReady = !isLoading && (readingsDone || !sign);
+  const readingsReady = readingsDone || !sign;
   const soniaGreeting = `Welcome, dear ${signLabel}. I'm Sonia, and I only bring good news. Here is the bright side of your stars.`;
+  // Voice both readings as soon as they're written: Moira's is ready long before
+  // the visitor reaches her, and Sonia's is made while she says hello.
+  useEffect(() => {
+    if (!readingsReady) return;
+    prefetchVoice("sonia", displayBrightSide).catch(() => {});
+    prefetchVoice("moira", displayHorrorMirror).catch(() => {});
+  }, [readingsReady, displayBrightSide, displayHorrorMirror]);
   const moiraGreeting = `Well, well. Hello, ${signLabel}. I'm Moira, Sonia's twin, and she was far too kind. Here is what your stars are really saying.`;
 
   useEffect(() => {
     fetch("/api/voice?warm=1").catch(() => {}); // returning visitors may skip onboarding
-    const timer = setTimeout(() => setIsLoading(false), 3000);
+    const timer = setTimeout(() => setIntroDone(true), 3000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -313,9 +329,17 @@ function ReadingPageInner() {
             <img src="/assets/talking/sonia/base.webp" alt="Sonia the fortune teller" style={{width: "280px", height: "auto"}} />
           </div>
           <h2 className="font-serif text-3xl font-bold" style={{ color: "#E3B84B" }}>
-            Sonia is consulting the stars...
+            {introDone ? "Sonia is ready for you" : "Sonia is consulting the stars..."}
           </h2>
           <p className="text-[#D4C5F9] mt-4">Your reading awaits, dear {signLabel}</p>
+          {introDone && needsTap && (
+            <button
+              onClick={() => setTapped(true)}
+              className="mt-8 px-10 py-4 rounded-lg font-semibold text-xl bg-[#E3B84B] text-[#0B0B14] hover:opacity-90 transition"
+            >
+              ✦ Meet Sonia ✦
+            </button>
+          )}
         </div>
       </div>
     );
@@ -360,7 +384,7 @@ function ReadingPageInner() {
           <div className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="border-4 border-[#E3B84B] rounded-lg p-6 flex items-center justify-center">
-                <TalkingWitch who="sonia" text={displayBrightSide} greeting={soniaGreeting} autoPlay disabled={!readingsReady} />
+                <TalkingWitch who="sonia" text={displayBrightSide} greeting={soniaGreeting} greetingAudio={`/voice/greet-sonia-${currentSign}.mp3`} autoPlay disabled={!readingsReady} />
               </div>
 
               <div className="bg-[#1A1A2E] border-2 border-[#E3B84B] rounded-lg p-8">
@@ -416,7 +440,7 @@ function ReadingPageInner() {
 
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="flicker border-4 rounded-lg p-6 flex items-center justify-center" style={{ borderColor: "#2EE59D" }}>
-                <TalkingWitch who="moira" text={displayHorrorMirror} greeting={moiraGreeting} autoPlay disabled={!readingsReady} />
+                <TalkingWitch who="moira" text={displayHorrorMirror} greeting={moiraGreeting} greetingAudio={`/voice/greet-moira-${currentSign}.mp3`} autoPlay disabled={!readingsReady} />
               </div>
 
               <div className="bg-[#1A1A2E] rounded-lg p-8" style={{ borderColor: "#2EE59D", borderWidth: "2px" }}>

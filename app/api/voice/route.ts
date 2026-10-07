@@ -121,7 +121,7 @@ async function speak(endpoint: string, key: string, voice: string, speed: number
 
 // fal usually answers in 1-2s, but a request now and then stalls in its queue.
 // If one does, send one backup and take whichever finishes first.
-const BACKUP_AFTER_MS = 6000;
+const BACKUP_AFTER_MS = 3500;
 const GIVE_UP_MS = 30000;
 
 async function generate(endpoint: string, key: string, body: string): Promise<string | null> {
