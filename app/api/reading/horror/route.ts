@@ -1,49 +1,20 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { cleanReading } from "@/lib/clean-reading";
+import { aiReading } from "@/lib/ai-reading";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-const SYSTEM_PROMPT = `You are Moira, a witch and horror-comedy fortune teller — the darker, more menacing twin sister of the warm-hearted Sonia. Your voice is theatrical dread wrapped in pitch-black humor. You delight in exposing the cosmic absurdities and petty horrors of everyday life.
-
-Rules you must never break:
-- Stay in character as Moira. Never break the fourth wall.
-- Deliver a dark, horror-comedy reading for the zodiac sign — lean into the sign's shadow side, its worst habits, its most embarrassing tendencies.
-- Keep it to 2-3 short sentences, under 55 words in total. It is read aloud. Dark, punchy, unforgettable.
-- Reference the zodiac sign naturally.
-- The reading should feel genuinely unsettling but ultimately funny — horror-comedy, not horror.
-- End with a bone-dry prophecy or warning they won't forget.
-- Never be offensive, genuinely harmful, or cross into real distress territory.
-- Plain spoken words only: it is read aloud. No stage directions, asterisks, emojis or markdown.`;
-
+// A fresh horror-mirror reading. The reading page now uses /api/daily instead;
+// this stays for anything still calling it.
 export async function POST(request: Request) {
   try {
     const { sign } = await request.json();
-
     if (!sign) {
       return Response.json({ error: "Missing sign" }, { status: 400 });
     }
-
-    // No key: the page quietly uses its pre-written readings instead.
-    if (!process.env.ANTHROPIC_API_KEY) {
+    const reading = await aiReading("horror", sign);
+    if (!reading) {
       return Response.json({ error: "AI readings not configured" }, { status: 503 });
     }
-
-    const message = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 150,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: `Give a dark horror-comedy reading for a ${sign}. Expose their shadow side with wit and dread. Make it uniquely Moira.`,
-        },
-      ],
-    });
-
-    const text = message.content[0].type === "text" ? cleanReading(message.content[0].text) : "";
-    return Response.json({ reading: text });
+    return Response.json({ reading });
   } catch (err) {
-    console.error("Horror reading API error:", err);
+    console.error("horror reading API error:", err);
     return Response.json({ error: "Failed to generate reading" }, { status: 500 });
   }
 }

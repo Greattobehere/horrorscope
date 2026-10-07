@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toPng } from "html-to-image";
 import PortraitCrossfade from "../components/PortraitCrossfade";
-import TalkingWitch, { prefetchVoice } from "../components/TalkingWitch";
+import TalkingWitch, { prefetchVoice, voiceUrlFor } from "../components/TalkingWitch";
 import ShareCard from "../components/ShareCard";
 import { Suspense } from "react"
 import { READINGS, getReadingIndex } from "../data/readings";
@@ -62,27 +62,21 @@ function ReadingPageInner() {
     }
   }, [querySign]);
 
-  // Fetch AI readings after the loading screen completes
+  // Today's readings for this sign: the same for everyone with the sign that day,
+  // written and voiced once on the server, so they arrive (with voices) quickly.
+  const [day, setDay] = useState("");
   useEffect(() => {
     if (!sign) return;
     if (aiBrightSide && aiHorrorMirror) return; // already have results
 
     setIsLoadingReadings(true);
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Denver" }).format(new Date());
+    setDay(today);
+    const get = (kind: string) =>
+      fetch(`/api/daily/${kind}/${encodeURIComponent(sign)}/${today}`).then((r): Promise<{ reading?: string }> => (r.ok ? r.json() : Promise.resolve({})));
 
-    Promise.all([
-      fetch("/api/reading/brightside", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sign }),
-      }),
-      fetch("/api/reading/horror", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sign }),
-      }),
-    ])
-      .then(async ([bsRes, horRes]) => {
-        const [bsData, horData] = await Promise.all([bsRes.json(), horRes.json()]);
+    Promise.all([get("brightside"), get("horror")])
+      .then(([bsData, horData]) => {
         if (bsData.reading) setAiBrightSide(bsData.reading);
         if (horData.reading) setAiHorrorMirror(horData.reading);
       })
@@ -154,11 +148,14 @@ function ReadingPageInner() {
   const soniaGreeting = `Welcome, dear ${signLabel}. I'm Sonia, and I only bring good news. Here is the bright side of your stars.`;
   // Voice both readings as soon as they're written: Moira's is ready long before
   // the visitor reaches her, and Sonia's is made while she says hello.
+  // The day's readings have ready-made voices; a stand-in reading is voiced on demand.
+  const soniaVoice = aiBrightSide && day ? `/api/daily-voice/sonia/${currentSign}/${day}` : voiceUrlFor("sonia", displayBrightSide);
+  const moiraVoice = aiHorrorMirror && day ? `/api/daily-voice/moira/${currentSign}/${day}` : voiceUrlFor("moira", displayHorrorMirror);
   useEffect(() => {
     if (!readingsReady) return;
-    prefetchVoice("sonia", displayBrightSide).catch(() => {});
-    prefetchVoice("moira", displayHorrorMirror).catch(() => {});
-  }, [readingsReady, displayBrightSide, displayHorrorMirror]);
+    prefetchVoice(soniaVoice).catch(() => {});
+    prefetchVoice(moiraVoice).catch(() => {});
+  }, [readingsReady, soniaVoice, moiraVoice]);
   const moiraGreeting = `Well, well. Hello, ${signLabel}. I'm Moira, Sonia's twin, and she was far too kind. Here is what your stars are really saying.`;
 
   useEffect(() => {
@@ -384,7 +381,7 @@ function ReadingPageInner() {
           <div className="space-y-8">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="border-4 border-[#E3B84B] rounded-lg p-6 flex items-center justify-center">
-                <TalkingWitch who="sonia" text={displayBrightSide} greeting={soniaGreeting} greetingAudio={`/voice/greet-sonia-${currentSign}.mp3`} autoPlay disabled={!readingsReady} />
+                <TalkingWitch who="sonia" text={displayBrightSide} greeting={soniaGreeting} greetingAudio={`/voice/greet-sonia-${currentSign}.mp3`} voiceUrl={soniaVoice} autoPlay disabled={!readingsReady} />
               </div>
 
               <div className="bg-[#1A1A2E] border-2 border-[#E3B84B] rounded-lg p-8">
@@ -440,7 +437,7 @@ function ReadingPageInner() {
 
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="flicker border-4 rounded-lg p-6 flex items-center justify-center" style={{ borderColor: "#2EE59D" }}>
-                <TalkingWitch who="moira" text={displayHorrorMirror} greeting={moiraGreeting} greetingAudio={`/voice/greet-moira-${currentSign}.mp3`} autoPlay disabled={!readingsReady} />
+                <TalkingWitch who="moira" text={displayHorrorMirror} greeting={moiraGreeting} greetingAudio={`/voice/greet-moira-${currentSign}.mp3`} voiceUrl={moiraVoice} autoPlay disabled={!readingsReady} />
               </div>
 
               <div className="bg-[#1A1A2E] rounded-lg p-8" style={{ borderColor: "#2EE59D", borderWidth: "2px" }}>

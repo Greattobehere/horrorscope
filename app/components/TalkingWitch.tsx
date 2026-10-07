@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 type Witch = "moira" | "sonia";
 
@@ -13,6 +13,8 @@ interface TalkingWitchProps {
   greeting?: string;
   /** Pre-recorded greeting, so she starts talking before the reading is written. */
   greetingAudio?: string;
+  /** Where the reading's voice comes from; defaults to voicing `text` on demand. */
+  voiceUrl?: string;
   /** Start talking on her own. */
   autoPlay?: boolean;
 }
@@ -34,12 +36,6 @@ const LAYERS: Record<Witch, { base: string; mouth: string; blink: string; name: 
   },
 };
 
-// Moira is slower and lower; Sonia is lighter and warmer.
-const DELIVERY: Record<Witch, { pitch: number; rate: number }> = {
-  moira: { pitch: 0.75, rate: 0.88 },
-  sonia: { pitch: 1.1, rate: 0.96 },
-};
-
 // How each voice is coloured in the browser. Moira is left clean so she sounds
 // exactly like the Exit 41 videos (no muffling, echo or wind under her).
 const SOUND: Record<Witch, { lowpass: number; gain: number; reverb: number; wind: number }> = {
@@ -47,23 +43,27 @@ const SOUND: Record<Witch, { lowpass: number; gain: number; reverb: number; wind
   sonia: { lowpass: 12000, gain: 1, reverb: 0.06, wind: 0 },
 };
 
-// Longest we wait for the reading's voice before using the browser's own voice.
-const VOICE_TIMEOUT_MS = 25000;
+// Longest she waits for the reading's voice. There is no robot-voice fallback:
+// if it never comes she simply goes quiet and the button lets the visitor retry.
+const VOICE_TIMEOUT_MS = 45000;
 
-// One request per witch + words, shared by the page's early prefetch and the
-// portrait itself. A failed request is forgotten so the next try starts fresh.
+// One request per voice URL, shared by the page's early prefetch and the portrait
+// itself. A failed request is forgotten so the next try starts fresh.
 const voices = new Map<string, Promise<Blob>>();
 
-export function prefetchVoice(who: Witch, text: string): Promise<Blob> {
-  const key = `${who}|${text}`;
-  let voice = voices.get(key);
+export function voiceUrlFor(who: Witch, text: string) {
+  return `/api/voice?${new URLSearchParams({ who, text })}`;
+}
+
+export function prefetchVoice(url: string): Promise<Blob> {
+  let voice = voices.get(url);
   if (!voice) {
-    voice = fetch(`/api/voice?${new URLSearchParams({ who, text })}`).then((res) => {
+    voice = fetch(url).then((res) => {
       if (!res.ok) throw new Error(`voice ${res.status}`);
       return res.blob();
     });
-    voice.catch(() => voices.delete(key));
-    voices.set(key, voice);
+    voice.catch(() => voices.delete(url));
+    voices.set(url, voice);
   }
   return voice;
 }
@@ -103,18 +103,6 @@ function startWind(ctx: AudioContext, level: number) {
   lfo.start();
 }
 
-const noopSubscribe = () => () => {};
-
-// Fallback only: the browser's own voices, preferring women's voices.
-function pickVoice(): SpeechSynthesisVoice | undefined {
-  const voices = window.speechSynthesis.getVoices().filter((v) => v.lang.startsWith("en"));
-  const preferred = [/female/i, /Zira|Hazel|Susan|Libby|Sonia|Serena|Kate|Fiona|Samantha|Karen|Moira|Tessa|Victoria|Aria|Jenny/i];
-  for (const pattern of preferred) {
-    const match = voices.find((v) => pattern.test(v.name));
-    if (match) return match;
-  }
-  return voices.find((v) => !/David|Mark|George|Guy|Daniel|Alex|Fred/i.test(v.name)) ?? voices[0];
-}
 
 // Browsers only allow sound after the visitor has clicked or tapped the page.
 const hasInteracted = () =>
@@ -135,6 +123,7 @@ export default function TalkingWitch({
   disabled = false,
   greeting = "",
   greetingAudio = "",
+  voiceUrl = "",
   autoPlay = false,
 }: TalkingWitchProps) {
   const layers = LAYERS[who];
@@ -142,18 +131,17 @@ export default function TalkingWitch({
   // without one, she says the greeting as part of the reading.
   const spoken = reading ? (greeting && !greetingAudio ? `${greeting} ${reading}` : reading) : "";
   const readingReady = !disabled && !!spoken;
+  const readingUrl = voiceUrl || (spoken ? voiceUrlFor(who, spoken) : "");
   const canStart = readingReady || !!greetingAudio;
 
   const [status, setStatus] = useState<"idle" | "loading" | "speaking">("idle");
   const [waitingForTap, setWaitingForTap] = useState(false);
   const [mouth, setMouth] = useState(0);
   const [blink, setBlink] = useState(false);
-  const supported = useSyncExternalStore(noopSubscribe, () => "speechSynthesis" in window, () => false);
   const sessionRef = useRef<Session | null>(null);
   const greetingRef = useRef<Promise<Blob | null> | null>(null);
-  const voiceRef = useRef<{ text: string; voice: Promise<Blob> } | null>(null);
+  const voiceRef = useRef<string>("");
   const startedRef = useRef(false);
-  const mouthTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Idle blinking, every few seconds.
   useEffect(() => {
@@ -181,17 +169,12 @@ export default function TalkingWitch({
   // Start making the reading's voice the moment the reading is final, so it's
   // ready by the time she finishes saying hello.
   useEffect(() => {
-    if (!readingReady || voiceRef.current?.text === spoken) return;
-    const voice = prefetchVoice(who, spoken);
-    voice.catch(() => {}); // handled when it's her turn to read
-    voiceRef.current = { text: spoken, voice };
-  }, [who, spoken, readingReady]);
+    if (!readingReady || !readingUrl) return;
+    prefetchVoice(readingUrl).catch(() => {}); // handled when it's her turn to read
+    voiceRef.current = readingUrl;
+  }, [readingUrl, readingReady]);
 
-  const stopMouth = useCallback(() => {
-    if (mouthTimer.current) clearInterval(mouthTimer.current);
-    mouthTimer.current = null;
-    setMouth(0);
-  }, []);
+  const stopMouth = useCallback(() => setMouth(0), []);
 
   const endSession = useCallback((session: Session | null) => {
     if (!session || session.stopped) return;
@@ -248,33 +231,9 @@ export default function TalkingWitch({
     return session;
   }, [who]);
 
-  const speakWithBrowser = useCallback(
-    (words: string) => {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(words);
-      const voice = pickVoice();
-      if (voice) utterance.voice = voice;
-      utterance.pitch = DELIVERY[who].pitch;
-      utterance.rate = DELIVERY[who].rate;
-      utterance.onstart = () => {
-        setStatus("speaking");
-        mouthTimer.current = setInterval(() => setMouth(0.25 + Math.random() * 0.75), 110);
-      };
-      utterance.onboundary = () => setMouth(1);
-      utterance.onend = () => {
-        stopMouth();
-        setStatus("idle");
-      };
-      utterance.onerror = utterance.onend;
-      window.speechSynthesis.speak(utterance);
-    },
-    [who, stopMouth],
-  );
-
   const speak = useCallback(async () => {
     if (!canStart) return;
     endSession(sessionRef.current);
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     const session = startSession();
     sessionRef.current = session;
 
@@ -296,14 +255,22 @@ export default function TalkingWitch({
         });
       });
 
-    // Waits (up to the timeout) for the reading to be written and voiced.
+    // Waits for the reading to be written and voiced, asking again if a request
+    // fails, until the timeout.
     const readingVoice = async (): Promise<Blob | null> => {
       const deadline = Date.now() + VOICE_TIMEOUT_MS;
-      while (!voiceRef.current && Date.now() < deadline && !session.stopped) await sleep(150);
-      const pending = voiceRef.current;
-      if (!pending || session.stopped) return null;
-      const left = Math.max(1000, deadline - Date.now());
-      return Promise.race([pending.voice, sleep(left).then(() => null)]).catch(() => null);
+      while (Date.now() < deadline && !session.stopped) {
+        const url = voiceRef.current;
+        if (!url) {
+          await sleep(150);
+          continue;
+        }
+        const left = Math.max(1000, deadline - Date.now());
+        const blob = await Promise.race([prefetchVoice(url), sleep(left).then(() => null)]).catch(() => null);
+        if (blob) return blob;
+        await sleep(1500); // the failed request was forgotten; the next loop asks again
+      }
+      return null;
     };
 
     try {
@@ -330,12 +297,10 @@ export default function TalkingWitch({
         setStatus("idle");
         return;
       }
-      // Voice service unavailable or too slow: use the browser's voice.
+      // The voice never came: go quiet rather than use a robotic voice.
       endSession(session);
       stopMouth();
-      voiceRef.current = null; // a later press asks the voice service again
-      if (supported && spoken) speakWithBrowser(spoken);
-      else setStatus("idle");
+      setStatus("idle");
     } catch (err) {
       endSession(session);
       stopMouth();
@@ -345,10 +310,9 @@ export default function TalkingWitch({
         setWaitingForTap(true);
       }
     }
-  }, [canStart, spoken, supported, startSession, endSession, stopMouth, speakWithBrowser]);
+  }, [canStart, startSession, endSession, stopMouth]);
 
   const stop = useCallback(() => {
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     endSession(sessionRef.current);
     stopMouth();
     setStatus("idle");
@@ -356,11 +320,7 @@ export default function TalkingWitch({
 
   // Stop talking when she leaves the page.
   useEffect(
-    () => () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
-      endSession(sessionRef.current);
-      if (mouthTimer.current) clearInterval(mouthTimer.current);
-    },
+    () => () => endSession(sessionRef.current),
     [endSession],
   );
 
