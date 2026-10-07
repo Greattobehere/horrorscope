@@ -1,4 +1,4 @@
-import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { aiReading, type ReadingKind } from "@/lib/ai-reading";
 import { VoiceRefused, synthesize } from "@/lib/voice";
 import { READINGS } from "@/app/data/readings";
@@ -37,10 +37,11 @@ function writtenReading(kind: ReadingKind, sign: string, date: string) {
 }
 
 const WITCH = { brightside: "sonia", horror: "moira" } as const;
-const tagFor = (kind: ReadingKind, sign: string, date: string) => `daily-${kind}-${sign}-${date}`;
 
-// Writes a reading the voice service will actually speak: fal's content filter
+// Writes a reading the voice service will speak in full: fal's content filter
 // refuses some of Moira's darker lines, so those are rewritten (up to 3 tries).
+// The filter isn't consistent, so the voice also leaves out any sentence it
+// still refuses later (lib/voice.ts).
 async function writeSpeakableReading(kind: ReadingKind, sign: string, date: string) {
   for (let attempt = 1; attempt <= 3; attempt++) {
     const text = await aiReading(kind, sign);
@@ -58,16 +59,9 @@ async function writeSpeakableReading(kind: ReadingKind, sign: string, date: stri
 }
 
 const cachedAiReading = (kind: ReadingKind, sign: string, date: string) =>
-  unstable_cache(() => writeSpeakableReading(kind, sign, date), ["daily-reading-v1", kind, sign, date], {
+  unstable_cache(() => writeSpeakableReading(kind, sign, date), ["daily-reading-v2", kind, sign, date], {
     revalidate: 3 * 86400,
-    tags: [tagFor(kind, sign, date)],
   })();
-
-/** Drops a stored reading the voice service refused, so the next request writes a new one. */
-export function forgetReading(kind: ReadingKind, sign: string, date: string) {
-  revalidateTag(tagFor(kind, sign, date), { expire: 0 });
-  revalidatePath(`/api/daily/${kind}/${sign}/${date}`);
-}
 
 /** The day's reading for a sign: the AI one if it can be written, else the pre-written one. */
 export async function dailyReading(kind: ReadingKind, sign: string, date: string) {

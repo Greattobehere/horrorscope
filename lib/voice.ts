@@ -172,16 +172,38 @@ export async function synthesize(who: Witch, text: string): Promise<ArrayBuffer 
   if (!key) return null;
   const config = VOICES[who];
   const endpoint = endpointFor(config.voice);
-  const say = (t: string) => speak(endpoint, key, config.voice, config.speed, t);
+  // fal's content filter is inconsistent: words refused once often pass on a retry.
+  const say = async (t: string) => {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await speak(endpoint, key, config.voice, config.speed, t);
+      } catch (err) {
+        if (!(err instanceof VoiceRefused) || attempt === 3) throw err;
+      }
+    }
+  };
 
   // Every sentence at once (no slower than one request), then stitched together
-  // with pauses. If anything about that goes wrong, speak the text in one go.
+  // with pauses. A sentence the filter keeps refusing is left out rather than
+  // losing the whole reading. If anything else goes wrong, speak it in one go.
   const started = Date.now();
   const sentences = splitSentences(text);
   if (sentences.length > 1 && sentences.length <= MAX_SENTENCES) {
-    const clips = await Promise.all(sentences.map(say));
-    const pcm = clips.map((c) => (c ? readWav(c) : null));
+    let refused = 0;
+    const clips = await Promise.all(
+      sentences.map((s) =>
+        say(s).catch((err) => {
+          if (!(err instanceof VoiceRefused)) throw err;
+          refused++;
+          return "skip" as const;
+        }),
+      ),
+    );
+    if (refused === sentences.length) throw new VoiceRefused(text);
+    const kept = clips.filter((c) => c !== "skip");
+    const pcm = kept.map((c) => (c ? readWav(c) : null));
     if (pcm.every((p): p is Pcm => p !== null)) {
+      if (refused) console.warn(`Voice: left out ${refused} refused sentence(s) of:`, text);
       const joined = joinWithSilence(pcm.map(trimSilence), config.pauseSeconds);
       if (joined) return joined;
     }
