@@ -48,7 +48,9 @@ export async function POST(req: NextRequest) {
     });
     if (found.data.length === 0) return generic;
 
-    await resend.emails.send({
+    // Resend reports failures (e.g. an unverified sending domain) in its return
+    // value instead of throwing, so check it or a failure is silent.
+    const { error: sendError } = await resend.emails.send({
       from: "Moira <moira@horrorscope.art>",
       to: email,
       subject: "Your Veil Season Pass link, again",
@@ -63,6 +65,7 @@ export async function POST(req: NextRequest) {
         <p style="font-size:13px;color:#777">Valid through November 15.</p>
       </div>`,
     });
+    if (sendError) console.error("[Email] resend-link email not sent:", sendError.message);
   } catch (err) {
     console.error("resend-link failed:", err);
   }

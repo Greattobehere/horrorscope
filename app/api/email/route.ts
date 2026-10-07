@@ -53,7 +53,9 @@ export async function POST(request: Request) {
 
     const resend = new Resend(apiKey);
 
-    await resend.emails.send({
+    // Resend reports failures (e.g. an unverified sending domain) in its return
+    // value instead of throwing, so check it or a failure is silent.
+    const { error: sendError } = await resend.emails.send({
       from: "HorrorScope <noreply@horrorscope.art>",
       to: address,
       subject: "Your fate has been recorded, dear seeker.",
@@ -71,6 +73,7 @@ export async function POST(request: Request) {
         </div>
       `,
     });
+    if (sendError) console.error("[Email] welcome email not sent:", sendError.message);
 
     return Response.json({ success: true });
   } catch (err) {

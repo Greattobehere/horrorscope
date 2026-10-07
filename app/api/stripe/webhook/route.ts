@@ -71,12 +71,15 @@ export async function POST(req: NextRequest) {
   const token = signPass(email, PASS_EXPIRY);
 
   try {
-    await resend.emails.send({
+    // Resend reports failures (e.g. an unverified sending domain) in its return
+    // value instead of throwing, so check it or a failure is silent.
+    const { error: sendError } = await resend.emails.send({
       from: "Moira <moira@horrorscope.art>",
       to: email,
       subject: "Your Veil Season Pass (Moira is unimpressed that you paid)",
       html: passEmailHtml(unlockUrl(token)),
     });
+    if (sendError) console.error("[Email] pass email not sent:", sendError.message);
   } catch (err) {
     console.error("Resend failed for", email, err);
     // Return 200 anyway — a 500 makes Stripe retry the whole webhook, and the
