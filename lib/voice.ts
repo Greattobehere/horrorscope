@@ -3,11 +3,20 @@
 
 // Moira matches the Exit 41 videos: the same voice at the pace the episodes use
 // for her "slow" lines (0.86 base x 0.88). Each sentence is spoken separately and
-// joined with real silence, so neither witch rushes from one sentence to the next.
+// joined with a natural pause (shorter after a short phrase, longer after a question
+// or a trailing "..."), so neither witch rushes from one sentence to the next.
 export const VOICES = {
-  moira: { voice: "af_nicole", speed: 0.757, pauseSeconds: 1.15 },
-  sonia: { voice: "af_aoede", speed: 0.8, pauseSeconds: 0.85 },
+  moira: { voice: "af_nicole", speed: 0.757, pauseSeconds: 0.75 },
+  sonia: { voice: "af_aoede", speed: 0.8, pauseSeconds: 0.6 },
 } as const;
+
+/** Pause after a sentence: brief after a short phrase, longer after a question or "...". */
+function pauseFor(sentence: string, base: number) {
+  const s = sentence.trim();
+  if (/(\?|\.\.\.|…)["'”’]?$/.test(s)) return base * 1.4;
+  if (s.split(/\s+/).length <= 3) return base * 0.6;
+  return base;
+}
 
 const MAX_SENTENCES = 12;
 
@@ -59,30 +68,44 @@ function readWav(buf: ArrayBuffer): Pcm | null {
 }
 
 // Kokoro pads every clip with its own silence; cut it so the gaps we add are exact.
+// The cut is gentle (a low threshold, room for breaths and the raspy tail of the last
+// word) and each clip fades in and out over 20 ms, so no sentence starts or stops abruptly.
 function trimSilence(p: Pcm): Pcm {
   const bitsPerSample = new DataView(p.format.buffer).getUint16(14, true);
   if (bitsPerSample !== 16) return p;
   const samples = new Int16Array(p.data.buffer, p.data.byteOffset, Math.floor(p.data.length / 2));
   const channels = p.blockAlign / 2;
-  const loud = (i: number) => Math.abs(samples[i]) > 300;
+  const loud = (i: number) => Math.abs(samples[i]) > 60;
   let start = 0;
   while (start < samples.length && !loud(start)) start++;
   let end = samples.length - 1;
   while (end > start && !loud(end)) end--;
   if (start >= end) return p;
-  const pad = Math.round((p.bytesPerSecond / p.blockAlign) * 0.06) * channels; // keep a breath of tail
-  const from = Math.max(0, start - pad) - (Math.max(0, start - pad) % channels);
-  const to = Math.min(samples.length, end + pad);
-  return { ...p, data: p.data.slice(from * 2, to * 2) };
+  const rate = p.bytesPerSecond / p.blockAlign;
+  const lead = Math.round(rate * 0.12) * channels;
+  const tail = Math.round(rate * 0.28) * channels; // keep the breath after the last word
+  const from = Math.max(0, start - lead) - (Math.max(0, start - lead) % channels);
+  const to = Math.min(samples.length, end + tail);
+  const data = p.data.slice(from * 2, to * 2);
+  const out = new Int16Array(data.buffer, data.byteOffset, Math.floor(data.length / 2));
+  const fade = Math.min(Math.round(rate * 0.02) * channels, Math.floor(out.length / 2));
+  for (let i = 0; i < fade; i++) {
+    const g = i / fade;
+    out[i] = Math.round(out[i] * g);
+    out[out.length - 1 - i] = Math.round(out[out.length - 1 - i] * g);
+  }
+  return { ...p, data };
 }
 
-// Joins the sentences into one WAV with a silent gap after each one.
-function joinWithSilence(parts: Pcm[], pauseSeconds: number): Uint8Array | null {
+// Joins the sentences into one WAV with a pause after each one (pauses[i] seconds).
+function joinWithSilence(parts: Pcm[], pauses: number[]): Uint8Array | null {
   const first = parts[0];
   const key = (p: Pcm) => Array.from(p.format.slice(0, 16)).join(",");
   if (parts.some((p) => key(p) !== key(first))) return null;
-  const gap = Math.round((first.bytesPerSecond * pauseSeconds) / first.blockAlign) * first.blockAlign;
-  const dataLength = parts.reduce((n, p) => n + p.data.length, 0) + gap * (parts.length - 1);
+  const gaps = parts.map((_, i) =>
+    i < parts.length - 1 ? Math.round((first.bytesPerSecond * pauses[i]) / first.blockAlign) * first.blockAlign : 0,
+  );
+  const dataLength = parts.reduce((n, p, i) => n + p.data.length + gaps[i], 0);
   const out = new Uint8Array(44 + dataLength);
   const view = new DataView(out.buffer);
   const ascii = (at: number, text: string) => [...text].forEach((c, i) => (out[at + i] = c.charCodeAt(0)));
@@ -97,7 +120,7 @@ function joinWithSilence(parts: Pcm[], pauseSeconds: number): Uint8Array | null 
   let at = 44;
   parts.forEach((p, i) => {
     out.set(p.data, at);
-    at += p.data.length + (i < parts.length - 1 ? gap : 0); // the gap is already zeros
+    at += p.data.length + gaps[i]; // the gap is already zeros
   });
   return out;
 }
@@ -200,11 +223,12 @@ export async function synthesize(who: Witch, text: string): Promise<ArrayBuffer 
       ),
     );
     if (refused === sentences.length) throw new VoiceRefused(text);
-    const kept = clips.filter((c) => c !== "skip");
-    const pcm = kept.map((c) => (c ? readWav(c) : null));
+    const keptAt = clips.flatMap((c, i) => (c !== "skip" ? [i] : []));
+    const pcm = keptAt.map((i) => { const c = clips[i]; return c && c !== "skip" ? readWav(c) : null; });
     if (pcm.every((p): p is Pcm => p !== null)) {
       if (refused) console.warn(`Voice: left out ${refused} refused sentence(s) of:`, text);
-      const joined = joinWithSilence(pcm.map(trimSilence), config.pauseSeconds);
+      const pauses = keptAt.map((i) => pauseFor(sentences[i], config.pauseSeconds));
+      const joined = joinWithSilence(pcm.map(trimSilence), pauses);
       if (joined) return joined;
     }
   }
