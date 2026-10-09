@@ -653,7 +653,7 @@ function ReadingPageInner() {
                 {needsPass && (
                   <div className="mt-6 pt-6 border-t border-[#E3B84B]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <p className="text-sm text-[#D4C5F9]/80">
-                      That was a free glimpse. The Veil Season Pass unlocks unlimited fate rewrites through November 15.
+                      That was a free glimpse. The Veil Season Pass unlocks unlimited fate rewrites through December 31.
                     </p>
                     <a
                       href={getRealPaymentLink() || "/pass"}

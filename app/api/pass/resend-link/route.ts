@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
                     text-decoration:none;border-radius:4px;display:inline-block;
                     font-family:system-ui,sans-serif">Unlock my readings</a>
         </p>
-        <p style="font-size:13px;color:#777">Valid through November 15.</p>
+        <p style="font-size:13px;color:#777">Valid through December 31.</p>
       </div>`,
     });
     if (sendError) console.error("[Email] resend-link email not sent:", sendError.message);

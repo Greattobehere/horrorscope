@@ -132,7 +132,7 @@ export default function Home() {
               The Veil Season Pass
             </h2>
             <p className="text-[#D4C5F9] text-lg leading-relaxed mb-8">
-              One payment. Unlimited AI-written readings from Sonia and unlimited fate rewrites from Moira, through November 15.
+              One payment. Unlimited AI-written readings from Sonia and unlimited fate rewrites from Moira, through December 31.
               No subscription, nothing to cancel.
             </p>
             {paymentLink ? (

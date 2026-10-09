@@ -12,7 +12,7 @@ export default function InvalidPass() {
         We&apos;ll send a fresh link.
       </p>
       <p style={{ fontSize: 14, color: "#666" }}>
-        The pass runs through November 15, 2026.
+        The pass runs through December 31, 2026.
       </p>
     </main>
   );

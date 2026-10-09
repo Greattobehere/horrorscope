@@ -41,7 +41,7 @@ export default function PrivacyPolicy() {
               <li>
                 <strong>One cookie</strong> that proves you hold a valid Veil Season Pass. It contains your email and
                 an expiry date, cryptographically signed so it can&apos;t be forged, and it stops working after the
-                pass expires (November 15, 2026) or if you clear your cookies.
+                pass expires (December 31, 2026) or if you clear your cookies.
               </li>
             </ul>
           </section>

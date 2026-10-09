@@ -27,7 +27,7 @@ export default function TermsOfService() {
             </h2>
             <p>
               The Veil Season Pass is a one-time purchase of $9.99 granting unlimited AI-generated readings and fate
-              rewrites through November 15, 2026. It is not a subscription — it does not renew and there is nothing
+              rewrites through December 31, 2026. It is not a subscription — it does not renew and there is nothing
               to cancel. Access ends automatically when the pass expires. Because it&apos;s a limited-run digital
               product consumed immediately upon purchase, purchases are final; if something went wrong with your
               order, email{" "}

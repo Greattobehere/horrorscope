@@ -107,7 +107,7 @@ function passEmailHtml(url: string): string {
 
     <p style="font-size:14px;color:#555">
       This link is yours. Clicking it on a device signs that device in until
-      November 15, when the veil closes and the pass ends. Keep the email if you
+      December 31, when the longest nights have passed and the pass ends. Keep the email if you
       use more than one device.
     </p>
 

@@ -9,13 +9,13 @@ import { cookies } from "next/headers";
  * an httpOnly cookie. To check access we verify the signature. That's it.
  *
  * Nobody can forge one without PASS_SECRET, and nothing needs to be stored
- * server-side, which is exactly what you want with five weeks on the clock.
+ * server-side.
  */
 
 const SECRET = process.env.PASS_SECRET;
 
 /** The pass ends here. Everyone gets the same date, regardless of purchase day. */
-export const PASS_EXPIRY = "2026-11-15T23:59:59.000Z";
+export const PASS_EXPIRY = "2026-12-31T23:59:59.000Z";
 
 export const PASS_COOKIE = "hs_pass";
 
