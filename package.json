@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0",
+    "@breezystack/lamejs": "1.2.7",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "html-to-image": "^1.11.13",

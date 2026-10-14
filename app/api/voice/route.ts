@@ -3,7 +3,7 @@
 //
 // GET /api/voice?who=moira&text=... (same witch + same words is cached at the edge)
 // GET /api/voice?warm=1 wakes the voice service as a visitor arrives.
-import { MAX_CHARS, VOICES, synthesize, wakeVoice, type Witch } from "@/lib/voice";
+import { MAX_CHARS, VOICES, forBrowser, synthesize, wakeVoice, type Witch } from "@/lib/voice";
 
 // fal can take 20s+ to answer when it is busy or waking up; give it time
 // instead of letting the platform's default timeout cut it off.
@@ -31,9 +31,10 @@ export async function GET(request: Request) {
     if (!audio) {
       return Response.json({ error: "Voice generation failed" }, { status: 502 });
     }
-    return new Response(audio as BodyInit, {
+    const { body, type } = forBrowser(audio);
+    return new Response(body as BodyInit, {
       headers: {
-        "Content-Type": "audio/wav",
+        "Content-Type": type,
         // Same witch + same words = same audio, so let Vercel's edge keep it.
         "Cache-Control": "public, max-age=86400, s-maxage=604800",
       },

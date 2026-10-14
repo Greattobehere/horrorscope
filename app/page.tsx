@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { getRealPaymentLink } from "@/lib/payment-link";
+import InstallApp from "./components/InstallApp";
 
 const SOCIAL_LINKS = [
   { label: "TikTok", url: process.env.NEXT_PUBLIC_TIKTOK_URL },
@@ -184,6 +185,7 @@ export default function Home() {
                 ))}
               </div>
             )}
+            <InstallApp />
             <div className="flex justify-center gap-8 mt-6 text-sm">
               <a href="/privacy" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Privacy</a>
               <a href="/terms" className="text-[#E3B84B] hover:text-[#F2EEF7] transition">Terms</a>

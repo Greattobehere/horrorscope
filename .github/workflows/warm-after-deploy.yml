@@ -1,0 +1,11 @@
+# A new deployment starts with an empty cache, so the first visitor for each sign would
+# wait 7-8 s while the day's readings are written and voiced. As soon as Vercel reports a
+# successful production deployment, make them all (the same job the nightly cron runs).
+name: Warm readings after deploy
+on: deployment_status
+jobs:
+  warm:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -sS -m 290 https://www.horrorscope.art/api/daily/warm

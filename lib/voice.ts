@@ -1,5 +1,6 @@
 // Moira's and Sonia's voices: Kokoro text-to-speech hosted on fal.ai (FAL_KEY).
 // Used by /api/voice (any text) and /api/daily-voice (the day's reading, made once).
+import { Mp3Encoder } from "@breezystack/lamejs";
 
 // Moira matches the Exit 41 videos: the same voice at the pace the episodes use
 // for her "slow" lines (0.86 base x 0.88). Each sentence is spoken separately and
@@ -241,4 +242,41 @@ export async function wakeVoice() {
   if (!key) return;
   const fresh = `Hi ${Date.now() % 1000}.`; // unique, so fal really runs it
   await generate(endpointFor(VOICES.sonia.voice), key, JSON.stringify({ prompt: fresh, voice: VOICES.sonia.voice }));
+}
+
+/**
+ * WAV -> MP3 (64 kbps mono): about 6x smaller, so a reading starts playing quickly on a
+ * phone connection. Returns null if the audio isn't plain 16-bit PCM (send the WAV then).
+ */
+export function toMp3(wav: ArrayBuffer | Uint8Array): Uint8Array | null {
+  const bytes = wav instanceof Uint8Array ? wav : new Uint8Array(wav);
+  const pcm = readWav(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer);
+  if (!pcm) return null;
+  const fmt = new DataView(pcm.format.buffer);
+  const channels = fmt.getUint16(2, true);
+  const rate = fmt.getUint32(4, true);
+  if (fmt.getUint16(14, true) !== 16 || channels !== 1) return null;
+  const samples = new Int16Array(pcm.data.buffer, pcm.data.byteOffset, Math.floor(pcm.data.length / 2));
+  const encoder = new Mp3Encoder(1, rate, 64);
+  const chunks: Uint8Array[] = [];
+  for (let i = 0; i < samples.length; i += 1152) {
+    const out = encoder.encodeBuffer(samples.subarray(i, i + 1152));
+    if (out.length) chunks.push(new Uint8Array(out));
+  }
+  chunks.push(new Uint8Array(encoder.flush()));
+  const mp3 = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
+  let at = 0;
+  for (const c of chunks) { mp3.set(c, at); at += c.length; }
+  return mp3;
+}
+
+/** The audio to send: MP3 when it encodes cleanly, otherwise the original WAV. */
+export function forBrowser(audio: ArrayBuffer | Uint8Array): { body: Uint8Array | ArrayBuffer; type: string } {
+  try {
+    const mp3 = toMp3(audio);
+    if (mp3 && mp3.length > 1000) return { body: mp3, type: "audio/mpeg" };
+  } catch (err) {
+    console.error("MP3 encode failed, sending WAV:", err);
+  }
+  return { body: audio, type: "audio/wav" };
 }
