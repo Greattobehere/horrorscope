@@ -44,7 +44,7 @@ const WITCH = { brightside: "sonia", horror: "moira" } as const;
 // still refuses later (lib/voice.ts).
 async function writeSpeakableReading(kind: ReadingKind, sign: string, date: string) {
   for (let attempt = 1; attempt <= 3; attempt++) {
-    const text = await aiReading(kind, sign);
+    const text = await aiReading(kind, sign, date);
     if (!text) break;
     try {
       await synthesize(WITCH[kind], text);
@@ -59,7 +59,7 @@ async function writeSpeakableReading(kind: ReadingKind, sign: string, date: stri
 }
 
 const cachedAiReading = (kind: ReadingKind, sign: string, date: string) =>
-  unstable_cache(() => writeSpeakableReading(kind, sign, date), ["daily-reading-v2", kind, sign, date], {
+  unstable_cache(() => writeSpeakableReading(kind, sign, date), ["daily-reading-v3", kind, sign, date], {
     revalidate: 3 * 86400,
   })();
 

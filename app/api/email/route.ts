@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { INSTALL_TEXT, SITE, installHtml } from "@/lib/install-steps";
 
 // Newsletter signups go to Kit (kit.com), where the owner writes and sends updates.
 // Only visitors who ticked the marketing box are added. Needs KIT_API_KEY (Kit ->
@@ -70,8 +71,23 @@ export async function POST(request: Request) {
             Return to HorrorScope any time the universe has something unsettling to tell you. Which, if history is any guide, will be soon.
           </p>
           <p style="color:#E3B84B;font-size:14px;">— Sonia, Fortune Teller of Dubious Reputation</p>
+          ${installHtml("#D4C5F9")}
+          <p style="font-size:12px;color:#9A90B8;margin-top:24px;">You're getting this because you entered this address at horrorscope.art. HorrorScope · ${SITE}</p>
         </div>
       `,
+      text: [
+        "HorrorScope",
+        "Sonia has noted your arrival.",
+        "",
+        "Welcome, dear seeker. Your cosmic file has been opened, your stars catalogued, and your fate is still being argued over by several constellations.",
+        "Return to HorrorScope any time the universe has something unsettling to tell you. Which, if history is any guide, will be soon.",
+        "- Sonia, Fortune Teller of Dubious Reputation",
+        "",
+        INSTALL_TEXT,
+        "",
+        `You're getting this because you entered this address at horrorscope.art. HorrorScope - ${SITE}`,
+      ].join("\n"),
+      replyTo: "hello@horrorscope.art",
     });
     if (sendError) console.error("[Email] welcome email not sent:", sendError.message);
 

@@ -38,14 +38,36 @@ Rules you must never break:
   },
 };
 
+// Without a topic the model writes nearly the same reading every day ("Ah, Scorpio! The
+// universe whispers... your superpower"), so each date gets its own subject and the stock
+// phrases are banned. Same date + sign = same topic, so everyone with a sign shares the day.
+const TOPICS = [
+  "your morning coffee", "a group chat", "your car", "leftovers in the fridge", "a neighbor", "your inbox",
+  "a houseplant", "money and a small purchase", "a pet (yours or someone else's)", "your boss or a client",
+  "a family dinner", "an old friend who reappears", "the weather", "a lost item", "your phone battery",
+  "a first impression", "a hobby you abandoned", "a road trip or commute", "a secret someone is keeping",
+  "your sleep and dreams", "a sale or a bargain", "a compliment", "an unexpected visitor", "cooking something",
+  "a mirror", "a deadline", "a song stuck in your head", "a door that sticks", "the season (it is late autumn, Halloween season)",
+  "a small act of courage",
+];
+
+function dayNumber(date: string) {
+  const [y, m, d] = date.split("-").map(Number);
+  return Math.floor(Date.UTC(y, m - 1, d) / 86400000);
+}
+
 /** A fresh AI reading, or null when no ANTHROPIC_API_KEY is set. Throws on API errors. */
-export async function aiReading(kind: ReadingKind, sign: string): Promise<string | null> {
+export async function aiReading(kind: ReadingKind, sign: string, date?: string): Promise<string | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   const message = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
     max_tokens: 150,
     system: PROMPTS[kind].system,
-    messages: [{ role: "user", content: PROMPTS[kind].ask(sign) }],
+    temperature: 1,
+    messages: [{ role: "user", content: date ? `${PROMPTS[kind].ask(sign)}
+
+Today is ${date}. Build today's reading around this everyday subject: ${TOPICS[(dayNumber(date) * 7 + sign.length) % TOPICS.length]}.
+Make it specific to that subject, not a general personality description. Do not start with "Ah", and do not use the words "universe", "cosmos", "superpower" or "darling".` : PROMPTS[kind].ask(sign) }],
   });
   return message.content[0].type === "text" ? cleanReading(message.content[0].text) : null;
 }

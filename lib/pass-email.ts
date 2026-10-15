@@ -1,3 +1,5 @@
+import { INSTALL_TEXT, installHtml } from "@/lib/install-steps";
+
 // The Veil Season Pass emails (after purchase, and "lost my link"). Shared so both look
 // like the same real message to Gmail: a heading, a few sentences of explanation, one
 // button, the plain link written out, who it's from and why you got it, plus a plain-text
@@ -46,6 +48,8 @@ export function passEmail(kind: Kind, url: string) {
       passed and the pass ends. Keep this email if you use more than one device.
     </p>
     <p style="font-size:13px;color:#777;word-break:break-all">If the button doesn't work, copy this link: ${url}</p>
+    ${installHtml()}
+    <p style="font-size:14px;color:#555">On your phone, tap <b>Unlock my readings</b> above once, on that phone, to bring your pass with you.</p>
     <p style="font-size:13px;color:#777;margin-top:32px">
       Lost it later? Go to horrorscope.art/pass and enter this email address.<br>
       ${why}<br>
@@ -63,6 +67,9 @@ export function passEmail(kind: Kind, url: string) {
     "",
     "Clicking the link on a device signs that device in until December 31. Keep this email if you use more than one device.",
     "Lost it later? Go to horrorscope.art/pass and enter this email address.",
+    "",
+    INSTALL_TEXT,
+    "On your phone, open the unlock link above once, on that phone, to bring your pass with you.",
     "",
     why,
     "HorrorScope - horrorscope.art - Questions? Just reply to this email.",
