@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { Resend } from "resend";
 import { signPass, unlockUrl, PASS_EXPIRY } from "@/lib/pass";
+import { passEmail } from "@/lib/pass-email";
 
 // Must be nodejs — we need the raw body for signature verification.
 export const runtime = "nodejs";
@@ -76,8 +77,7 @@ export async function POST(req: NextRequest) {
     const { error: sendError } = await resend.emails.send({
       from: "Moira <moira@horrorscope.art>",
       to: email,
-      subject: "Your Veil Season Pass (Moira is unimpressed that you paid)",
-      html: passEmailHtml(unlockUrl(token)),
+      ...passEmail("purchase", unlockUrl(token)),
     });
     if (sendError) console.error("[Email] pass email not sent:", sendError.message);
   } catch (err) {
@@ -89,30 +89,3 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-function passEmailHtml(url: string): string {
-  return `
-  <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;color:#1a1a1a;line-height:1.6">
-    <h1 style="font-size:22px;margin:0 0 18px">Your Veil Season Pass is ready.</h1>
-
-    <p>Moira says thank you for your money. She also says you could have
-    saved it and simply kept making the same choices, but nobody asked her.</p>
-
-    <p style="margin:28px 0">
-      <a href="${url}"
-         style="background:#1a1a1a;color:#fff;padding:14px 26px;text-decoration:none;
-                border-radius:4px;display:inline-block;font-family:system-ui,sans-serif">
-        Unlock my readings
-      </a>
-    </p>
-
-    <p style="font-size:14px;color:#555">
-      This link is yours. Clicking it on a device signs that device in until
-      December 31, when the longest nights have passed and the pass ends. Keep the email if you
-      use more than one device.
-    </p>
-
-    <p style="font-size:13px;color:#777;margin-top:32px">
-      Lost it? Go to horrorscope.art/pass and enter this email address.
-    </p>
-  </div>`;
-}

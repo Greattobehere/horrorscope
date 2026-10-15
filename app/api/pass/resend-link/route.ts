@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { Resend } from "resend";
 import { signPass, unlockUrl, PASS_EXPIRY } from "@/lib/pass";
+import { passEmail } from "@/lib/pass-email";
+
+/** A refunded purchase doesn't get its link re-sent. Needs "Charges: Read" on the key; without it, assume not refunded. */
+async function refunded(stripe: Stripe, pi: string | Stripe.PaymentIntent | null): Promise<boolean> {
+  if (!pi) return false;
+  try {
+    const intent = await stripe.paymentIntents.retrieve(typeof pi === "string" ? pi : pi.id, { expand: ["latest_charge"] });
+    const charge = intent.latest_charge;
+    return typeof charge === "object" && charge !== null && charge.refunded;
+  } catch {
+    return false;
+  }
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,7 +62,7 @@ export async function POST(req: NextRequest) {
     const since = Math.floor(Date.now() / 1000) - 200 * 24 * 3600;
     for await (const s of stripe.checkout.sessions.list({ created: { gte: since }, status: "complete", limit: 100 })) {
       const buyer = (s.customer_details?.email || s.customer_email || "").toLowerCase().trim();
-      if (buyer === email && s.payment_status === "paid") {
+      if (buyer === email && s.payment_status === "paid" && !(await refunded(stripe, s.payment_intent))) {
         paid = true;
         break;
       }
@@ -73,17 +86,7 @@ export async function POST(req: NextRequest) {
     const { error: sendError } = await resend.emails.send({
       from: "Moira <moira@horrorscope.art>",
       to: email,
-      subject: "Your Veil Season Pass link, again",
-      html: `<div style="font-family:Georgia,serif;max-width:520px;line-height:1.6">
-        <p>Moira says losing things is on brand for you.</p>
-        <p style="margin:24px 0">
-          <a href="${unlockUrl(signPass(email, PASS_EXPIRY))}"
-             style="background:#1a1a1a;color:#fff;padding:14px 26px;
-                    text-decoration:none;border-radius:4px;display:inline-block;
-                    font-family:system-ui,sans-serif">Unlock my readings</a>
-        </p>
-        <p style="font-size:13px;color:#777">Valid through December 31.</p>
-      </div>`,
+      ...passEmail("again", unlockUrl(signPass(email, PASS_EXPIRY))),
     });
     if (sendError) console.error("[Email] resend-link email not sent:", sendError.message);
     else console.log("resend-link: unlock link sent");
