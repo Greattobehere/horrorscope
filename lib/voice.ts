@@ -20,6 +20,7 @@ function pauseFor(sentence: string, base: number) {
 }
 
 const MAX_SENTENCES = 12;
+const SENTENCES_AT_ONCE = 6;
 
 export const MAX_CHARS = 1100; // greeting + a short reading; this caps cost per request
 
@@ -214,15 +215,18 @@ export async function synthesize(who: Witch, text: string): Promise<ArrayBuffer 
   const sentences = splitSentences(text);
   if (sentences.length > 1 && sentences.length <= MAX_SENTENCES) {
     let refused = 0;
-    const clips = await Promise.all(
-      sentences.map((s) =>
-        say(s).catch((err) => {
-          if (!(err instanceof VoiceRefused)) throw err;
-          refused++;
-          return "skip" as const;
-        }),
-      ),
-    );
+    // fal allows 20 requests at once across the whole account, so a few sentences at a
+    // time (the nightly warm-up voices several readings back to back).
+    const sayOrSkip = (t: string) =>
+      say(t).catch((err) => {
+        if (!(err instanceof VoiceRefused)) throw err;
+        refused++;
+        return "skip" as const;
+      });
+    const clips: Awaited<ReturnType<typeof sayOrSkip>>[] = [];
+    for (let i = 0; i < sentences.length; i += SENTENCES_AT_ONCE) {
+      clips.push(...(await Promise.all(sentences.slice(i, i + SENTENCES_AT_ONCE).map(sayOrSkip))));
+    }
     if (refused === sentences.length) throw new VoiceRefused(text);
     const keptAt = clips.flatMap((c, i) => (c !== "skip" ? [i] : []));
     const pcm = keptAt.map((i) => { const c = clips[i]; return c && c !== "skip" ? readWav(c) : null; });

@@ -43,8 +43,17 @@ export async function POST(req: NextRequest) {
     // Look the buyer up by the email on their paid Checkout Session. (The webhook's
     // metadata tag isn't reliable: with newer API versions the session can arrive
     // without a payment_intent, so the tag was never written.)
-    const sessions = await stripe.checkout.sessions.list({ customer_details: { email }, limit: 10 });
-    let paid = sessions.data.some((s) => s.payment_status === "paid");
+    // Stripe's email filter is case-sensitive and buyers type "Name@Gmail.com", so compare
+    // lowercase across recent paid sessions (passes are seasonal, so this list stays small).
+    let paid = false;
+    const since = Math.floor(Date.now() / 1000) - 200 * 24 * 3600;
+    for await (const s of stripe.checkout.sessions.list({ created: { gte: since }, status: "complete", limit: 100 })) {
+      const buyer = (s.customer_details?.email || s.customer_email || "").toLowerCase().trim();
+      if (buyer === email && s.payment_status === "paid") {
+        paid = true;
+        break;
+      }
+    }
     if (!paid) {
       // Older purchases that were tagged by the webhook.
       const escaped = email.replace(/'/g, "");
@@ -54,7 +63,10 @@ export async function POST(req: NextRequest) {
       });
       paid = found.data.length > 0;
     }
-    if (!paid) return generic;
+    if (!paid) {
+      console.log("resend-link: no paid checkout found for that address");
+      return generic;
+    }
 
     // Resend reports failures (e.g. an unverified sending domain) in its return
     // value instead of throwing, so check it or a failure is silent.
@@ -74,6 +86,7 @@ export async function POST(req: NextRequest) {
       </div>`,
     });
     if (sendError) console.error("[Email] resend-link email not sent:", sendError.message);
+    else console.log("resend-link: unlock link sent");
   } catch (err) {
     console.error("resend-link failed:", err);
   }

@@ -12,10 +12,11 @@ export async function GET(request: Request) {
     (["sonia", "moira"] as const).map((who) => `${origin}/api/daily-voice/${who}/${sign}/${date}`),
   );
   const results: Record<string, number> = {};
-  // A few at a time, to stay well inside the voice service's limits.
-  for (let i = 0; i < jobs.length; i += 3) {
+  // One reading at a time: each reading already sends several sentences to the voice
+  // service at once, and fal allows only 20 requests at a time.
+  for (let i = 0; i < jobs.length; i += 1) {
     await Promise.all(
-      jobs.slice(i, i + 3).map(async (url) => {
+      jobs.slice(i, i + 1).map(async (url) => {
         const kind = url.includes("/sonia/") ? "brightside" : "horror";
         const [sign] = url.split("/").slice(-2);
         await fetch(`${origin}/api/daily/${kind}/${sign}/${date}`).catch(() => null);
