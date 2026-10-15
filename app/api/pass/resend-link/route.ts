@@ -39,14 +39,22 @@ export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   const resend = new Resend(process.env.RESEND_API_KEY);
 
-  // Stripe search only indexes metadata we set in the webhook.
-  const escaped = email.replace(/'/g, "");
   try {
-    const found = await stripe.paymentIntents.search({
-      query: `metadata['hs_email']:'${escaped}' AND status:'succeeded'`,
-      limit: 1,
-    });
-    if (found.data.length === 0) return generic;
+    // Look the buyer up by the email on their paid Checkout Session. (The webhook's
+    // metadata tag isn't reliable: with newer API versions the session can arrive
+    // without a payment_intent, so the tag was never written.)
+    const sessions = await stripe.checkout.sessions.list({ customer_details: { email }, limit: 10 });
+    let paid = sessions.data.some((s) => s.payment_status === "paid");
+    if (!paid) {
+      // Older purchases that were tagged by the webhook.
+      const escaped = email.replace(/'/g, "");
+      const found = await stripe.paymentIntents.search({
+        query: `metadata['hs_email']:'${escaped}' AND status:'succeeded'`,
+        limit: 1,
+      });
+      paid = found.data.length > 0;
+    }
+    if (!paid) return generic;
 
     // Resend reports failures (e.g. an unverified sending domain) in its return
     // value instead of throwing, so check it or a failure is silent.

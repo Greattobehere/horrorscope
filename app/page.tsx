@@ -154,10 +154,10 @@ export default function Home() {
               </span>
             )}
             {paymentLink && (
-              <p className="text-[#D4C5F9]/60 text-sm mt-4">
+              <p className="text-[#D4C5F9] text-base mt-5">
                 Already have a pass?{" "}
-                <a href="/pass" className="underline hover:text-[#E3B84B] transition">
-                  Resend my unlock link
+                <a href="/pass" className="font-semibold text-[#E3B84B] underline hover:text-[#F2EEF7] transition">
+                  Get my unlock link again
                 </a>
               </p>
             )}
